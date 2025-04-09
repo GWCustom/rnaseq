@@ -167,3 +167,7 @@ cython_debug/
 Dockerfile
 
 resource_example*
+
+
+#local_requirements
+local_requirements.txt
