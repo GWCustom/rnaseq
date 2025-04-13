@@ -9,8 +9,17 @@ import bfabric_web_apps
 from generic.callbacks import app
 from generic.components import no_auth
 from pathlib import Path
+from dash.dash_table import DataTable
+import pandas as pd
+from bfabric_web_apps.utils.redis_queue import q
+from bfabric_web_apps import run_main_job, get_logger, read_file_as_bytes
 
 bfabric_web_apps.DEBUG = True  # Set to True for debugging mode
+
+
+######################################################################################################
+####################### STEP 1: Get Data From the User! ##############################################
+######################################################################################################
 
 # ------------------------------------------------------------------------------
 # 1) SIDEBAR DEFINITION
@@ -71,12 +80,22 @@ sidebar = dbc.Container(
             ],
         ),
         html.Br(),
-
+        html.P(id="sidebar_text_3", children="Submit job to which queue?"),
+        dcc.Dropdown(
+            options=[
+                {'label': 'light', 'value': 'light'},
+                {'label': 'heavy', 'value': 'heavy'}
+            ],
+            value='light',
+            id='queue'
+    ),
+    html.Br(),
+    html.Br(),
         # Submit Button
         dbc.Button("Submit", id='submit_btn', n_clicks=0),
     ],
     style={
-        "maxHeight": "60vh",
+        "maxHeight": "100vh",
         "overflowY": "auto",
         "overflowX": "hidden",
         "margin": "10px"
@@ -139,10 +158,11 @@ app_specific_layout = dbc.Row(
             html.Div(
                 id="page-content",
                 children=[
+                    dcc.Store(id="dataset", data={}),
                     html.Div(id="auth-div")  # Placeholder for `auth-div` to be updated dynamically.
                 ],
                 style={
-                    "margin-top": "20vh",
+                    "margin-top": "2vh",
                     "margin-left": "2vw",
                     "font-size": "20px"
                 }
@@ -181,7 +201,7 @@ documentation_content = [
     )
 ]
 
-app_title = "rnaseq UI"
+app_title = "rnaseq-UI"
 
 # ------------------------------------------------------------------------------
 # 6) SET APPLICATION LAYOUT
@@ -209,8 +229,13 @@ def toggle_modal(submit_btn_clicks, confirm_clicks, is_open):
     return is_open
 
 
+# ------------------------------------------------------------------------------
+# 8) CALLBACK TO POPULATE DEFAULT VALUES
+# ------------------------------------------------------------------------------
 @app.callback(
         Output("name", "value"),
+        Output("fasta", "value"),
+        Output("gtf", "value"),
         Input("entity", "data"),
         State("app_data", "data")
 )
@@ -231,44 +256,75 @@ def populate_default_values(entity_data, app_data):
     Returns:
             - name (str): Default job name.
     """
-
     name = entity_data.get("name", "Unknown")
+    fasta = "FASTA_1"
+    gtf = "GTF_1"
+    return name, fasta, gtf
 
-    return name
 
+######################################################################################################
+####################### STEP 2: Get data from B-Fabric! ##############################################
+######################################################################################################
 
+# ------------------------------------------------------------------------------
+# 1) CALLBACK TO UPDATE DATASET IN UI
+# ------------------------------------------------------------------------------
+
+@app.callback(
+    Output("dataset", "data"),
+    Input("entity", "data"),
+)
+def update_dataset(entity_data):
+    df = dataset_to_dictionary(entity_data.get("full_api_response", {}))
+    return df
 
 
 # ------------------------------------------------------------------------------
-# 8) CALLBACK TO UPDATE UI BASED ON AUTHENTICATION & ENTITY
+# 2) FUNCTION TO CREATE DATAFRAME FROM B-FABRIC API RESPONSE
+# ------------------------------------------------------------------------------
+
+def dataset_to_dictionary(dataset): 
+
+    """
+    Convert B-Fabric API Dataset Response 
+    to a pandas dataframe
+
+    Args: 
+        dataset (dict): B-Fabric API Dataset Response
+
+    Returns:
+        pd.DataFrame: Dataframe containing the dataset information
+    """
+
+    # Check if the dataset is empty
+    if not dataset:
+        return pd.DataFrame()
+
+    attributes = dataset.get("attribute", []) 
+    items = [elt.get("field") for elt in dataset.get("item", [])]
+
+    position_map = {str(elt.get("position")): elt.get("name") for elt in attributes} # Create a mapping of attribute positions to names
+    df_dict = {elt : [] for elt in position_map.values()} # Create a dictionary to hold the dataframe data
+
+    for item in items: 
+        for field in item: 
+            attribute_position = field.get("attributeposition")
+            df_dict[position_map.get(attribute_position)].append(field.get("value")) # Append the field value to the corresponding attribute name in the dictionary
+                
+    # Create a dataframe from the dictionary
+    return df_dict
+
+
+# ------------------------------------------------------------------------------
+# 3) CALLBACK TO UPDATE UI BASED ON AUTHENTICATION & ENTITY
 # ------------------------------------------------------------------------------
 @app.callback(
-    [
-        Output('name', 'disabled'),
-        Output('comment', 'disabled'),
-        Output('ram', 'disabled'),
-        Output('cpu', 'disabled'),
-        Output('mail', 'disabled'),
-        Output('fasta', 'disabled'),
-        Output('gtf', 'disabled'),
-        Output('Submit', 'disabled'),  # The "Yes!" button in the modal
-        Output('auth-div', 'children')
-    ],
-    [
-        Input('name', 'value'),
-        Input('comment', 'value'),
-        Input('ram', 'value'),
-        Input('cpu', 'value'),
-        Input('mail', 'value'),
-        Input('fasta', 'value'),
-        Input('gtf', 'value'),
-        Input('token_data', 'data'),
-    ],
-    [State('entity', 'data')]
+    Output('auth-div', 'children'),
+    Input("dataset", "data"),
+    State("token_data", "data"),
+    State("entity", "data")
 )
-def update_ui(name_val, comment_val, ram_val, cpu_val,
-              mail_val, fasta_val, gtf_val,
-              token_data, entity_data):
+def load_dataset_to_ui(data, token_data, entity_data):
     """
     Disables the sidebar inputs if the user is not authenticated
     or if DEV mode is toggled. Also displays user/entity data in `auth-div`.
@@ -291,44 +347,80 @@ def update_ui(name_val, comment_val, ram_val, cpu_val,
     else:
         # If token and entity data exist, display them
         try:
-            auth_div_content = dbc.Row([
-                dbc.Col([
-                    html.H2("Entered Sidebar Data:"),
-                    html.P(f"Name: {name_val}"),
-                    html.P(f"Comment: {comment_val}"),
-                    html.P(f"RAM: {ram_val}"),
-                    html.P(f"CPU: {cpu_val}"),
-                    html.P(f"Mail: {mail_val}"),
-                    html.P(f"FASTA: {fasta_val}"),
-                    html.P(f"GTF: {gtf_val}"),
-                ]),
-                dbc.Col([
-                    html.H2("Entity Data:"),
-                    html.P(f"Entity Class: {token_data['entityClass_data']}"),
-                    html.P(f"Entity ID: {token_data['entity_id_data']}"),
-                    html.P(f"Created By: {entity_data['createdby']}"),
-                    html.P(f"Created: {entity_data['created']}"),
-                    html.P(f"Modified: {entity_data['modified']}"),
-                ]),
-            ])
+
+            df = pd.DataFrame(data) 
+
+            if df.empty:
+                return html.Div("No dataset loaded")
+
+            else:
+                table = DataTable(
+                id='datatable',
+                data=df.to_dict('records'),        
+                columns=[{"name": i, "id": i} for i in df.columns], 
+                selected_rows=[i for i in range(len(df))],
+                row_selectable='multi',
+                page_action="native",
+                page_current=0,
+                page_size=15,
+                style_data={
+                    'whiteSpace': 'normal',
+                    'height': 'auto'
+                },
+                style_table={
+                    'overflowX': 'auto', 
+                    'maxWidth': '90%'
+                },
+                style_cell={
+                    'textAlign': 'left',
+                    'padding': '5px',
+                    'whiteSpace': 'normal',
+                    'height': 'auto',
+                    'fontSize': '0.85rem',
+                    'font-family': 'Arial',
+                    'border': '1px solid lightgrey'
+                },
+                style_header={
+                    'backgroundColor': 'rgb(230, 230, 230)',
+                    'fontWeight': 'bold'
+                }
+                )
+
+                auth_div_content = html.Div([
+                    html.H4("Dataset"),
+                    table
+                ])
+                        
         except Exception as e:
             # In case something goes wrong
             auth_div_content = html.P(f"Error Logging into B-Fabric: {str(e)}")
 
     return (
-        disabled,  # Name field
-        disabled,  # Comment field
-        disabled,  # RAM
-        disabled,  # CPU
-        disabled,  # Mail
-        disabled,  # FASTA
-        disabled,  # GTF
-        disabled,  # Submit button in the modal
         auth_div_content
     )
 
+
+
+######################################################################################################
+############################### STEP 3: Submit the Job! ##############################################
+###################################################################################################### 
+
 # ------------------------------------------------------------------------------
-# 9) CALLBACK TO CREATE WORKUNITS OR RESOURCES
+# 1) FUNCTION TO CREATE RESOURCE PATHS
+# ------------------------------------------------------------------------------
+
+def create_resource_paths(token_data):
+    pass
+
+
+# ------------------------------------------------------------------------------
+# 2) FUNCTION TO CREATE SAMPLE SHEET CSV
+# ------------------------------------------------------------------------------
+
+
+
+# ------------------------------------------------------------------------------
+# 3) CALLBACK TO RUN MAIN JOB
 # ------------------------------------------------------------------------------
 @app.callback(
     [
@@ -347,18 +439,91 @@ def update_ui(name_val, comment_val, ram_val, cpu_val,
         State("fasta", "value"),
         State("gtf", "value"),
         State("token_data", "data"),
+        State("queue", "value"),
     ],
     prevent_initial_call=True
 )
-def create_resources(n_clicks,
+def run_main_job_callback(n_clicks,
                      name_val, comment_val,
                      ram_val, cpu_val,
                      mail_val, fasta_val,
                      gtf_val,
-                     token_data):
+                     token_data, queue):
+    """
+    1. Files as bytes -> samplesheets usw
+    2. Bash Comments -> Run NF Core pipline
+    3. Resource Paths
+    4. Attachments Paths
+    5. Create Charges -> True
+    """
 
-    # If no clicks yet, do nothing
-    return False, False, None, html.Div()
+    L = get_logger(token_data)
+    try:
+        # Log that the user has initiated the main job pipeline.
+        L.log_operation("Info | ORIGIN: rnaseq web app", "Job started: User initiated main job pipeline.")
+
+
+        # 1. Create csvs samplesheet
+
+        # 2. Files as bytes -> samplesheets usw
+
+
+        # 3. Bash command
+
+        # Define the output directory for the pipeline.
+        base_dir = "/STORAGE/OUTPUT_rnaseq"
+
+        # Construct the bash command to run the nf-core rnaseq pipeline.
+        bash_commands = [
+
+            "rm -rf /APPLICATION/temp_rnaseq_run/work"
+            ,
+            f"""/home/nfc/.local/bin/nextflow run nf-core/rnaseq \
+            -profile docker \
+            --input /APPLICATION/temp_rnaseq_run/samplesheet.csv \
+            --fasta /APPLICATION/temp_rnaseq_run/fasta_and_gtf_files/Homo_sapiens.GRCh38.dna.primary_assembly.fa \
+            --gtf /APPLICATION/temp_rnaseq_run/fasta_and_gtf_files/Homo_sapiens.GRCh38.109.gtf \
+            --skip_trimming \
+            --outdir {base_dir} \
+            --max_cpus 6 \
+            -c /APPLICATION/temp_rnaseq_run/NFC_RNA.config \
+            > /STORAGE/{base_dir}/nextflow.log 2>&1"""
+        ]
+
+
+        # 4. Create resource paths mapping file or folder to container IDs.
+
+
+        # 5. Set attachment paths (e.g., for reports)
+
+
+        # 6. Enqueue the main job into the Redis queue for asynchronous execution.
+        
+        """
+        
+        q(queue).enqueue(run_main_job, kwargs={
+            "files_as_byte_strings": files_as_byte_strings,
+            "bash_commands": bash_commands,
+            "resource_paths": resource_paths,
+            "attachment_paths": attachment_paths,
+            "token": url_params
+        })
+      
+        """
+
+        # Log that the job was submitted successfully.
+        L.log_operation("Info | ORIGIN: rnaseq web app", f"Job submitted successfully to {queue} Redis queue.")
+        # Return success alert open, failure alert closed, no error message, and a success message.
+        return True, False, "", "Job submitted successfully"
+
+    except Exception as e:
+        # Log that the job submission failed.
+        L.log_operation("Info | ORIGIN: rnaseq web app", f"Job submission failed: {str(e)}")
+        # If an error occurs, return failure alert open with the error message.
+        return False, True, f"Job submission failed: {str(e)}", "Job submission failed"
+
+
+debug=bfabric_web_apps.DEBUG = True
 
 # ------------------------------------------------------------------------------
 # 10) RUN THE APP
