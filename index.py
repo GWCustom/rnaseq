@@ -24,7 +24,7 @@ bfabric_web_apps.DEBUG = True  # Set to True for debugging mode
 # ------------------------------------------------------------------------------
 # 1) SIDEBAR DEFINITION
 # ------------------------------------------------------------------------------
-sidebar = dbc.Container(
+sidebar = bfabric_web_apps.components.charge_switch + [dbc.Container(
     [
         # Name
         html.P("Name"),
@@ -64,8 +64,9 @@ sidebar = dbc.Container(
         dbc.Select(
             id='fasta',
             options=[
-                {'label': 'FASTA_1', 'value': 'fasta_1'},
-                {'label': 'FASTA_2', 'value': 'fasta_2'},
+                {'label': 'Homo_sapiens.GRCh38.dna.primary_assembly.fa', 'value': 'Homo_sapiens.GRCh38.dna.primary_assembly.fa'},
+                {'label': 'Homo_sapiens.GRCh38.dna.toplevel.fa', 'value': 'Homo_sapiens.GRCh38.dna.toplevel.fa'},
+                {'label': 'Homo_sapiens.GRCh38.cdna.all.fa', 'value': 'Homo_sapiens.GRCh38.cdna.all.fa'},
             ],
         ),
         html.Br(),
@@ -75,8 +76,9 @@ sidebar = dbc.Container(
         dbc.Select(
             id='gtf',
             options=[
-                {'label': 'GTF_1', 'value': 'gtf_1'},
-                {'label': 'GTF_2', 'value': 'gtf_2'},
+                {'label': 'Homo_sapiens.GRCh38.109.gtf', 'value': 'Homo_sapiens.GRCh38.109.gtf'},
+                {'label': 'Homo_sapiens.GRCh38.110.gtf', 'value': 'Homo_sapiens.GRCh38.110.gtf'},
+                {'label': 'gencode.v38.annotation.gtf', 'value': 'gencode.v38.annotation.gtf'},
             ],
         ),
         html.Br(),
@@ -101,7 +103,7 @@ sidebar = dbc.Container(
         "margin": "10px"
     }
 )
-
+]
 # ------------------------------------------------------------------------------
 # 2) MODAL DEFINITION
 # ------------------------------------------------------------------------------
@@ -440,6 +442,8 @@ def create_resource_paths(token_data):
         State("gtf", "value"),
         State("token_data", "data"),
         State("queue", "value"),
+        State("charge_run", "on"),
+        State('url', 'search')
     ],
     prevent_initial_call=True
 )
@@ -448,7 +452,7 @@ def run_main_job_callback(n_clicks,
                      ram_val, cpu_val,
                      mail_val, fasta_val,
                      gtf_val,
-                     token_data, queue):
+                     token_data, queue, charge_run, url_params):
     """
     1. Files as bytes -> samplesheets usw
     2. Bash Comments -> Run NF Core pipline
@@ -463,15 +467,21 @@ def run_main_job_callback(n_clicks,
         L.log_operation("Info | ORIGIN: rnaseq web app", "Job started: User initiated main job pipeline.")
 
 
-        # 1. Create csvs samplesheet
+        # 1. Create samplesheet csv
+
 
         # 2. Files as bytes -> samplesheets usw
+        files_as_byte_strings = {}
 
+        files_as_byte_strings["./NFC_RNA.config"] = read_file_as_bytes("./NFC_RNA.config")
+        L.log_operation("Info | ORIGIN: rnaseq web app", "NFC_RNA configuration loaded from ./NFC_RNA.config.")
 
         # 3. Bash command
 
+
         # Define the output directory for the pipeline.
         base_dir = "/STORAGE/OUTPUT_rnaseq"
+
 
         # Construct the bash command to run the nf-core rnaseq pipeline.
         bash_commands = [
@@ -492,24 +502,21 @@ def run_main_job_callback(n_clicks,
 
 
         # 4. Create resource paths mapping file or folder to container IDs.
-
+        resource_paths = {}
 
         # 5. Set attachment paths (e.g., for reports)
+        attachment_paths = {}
 
-
-        # 6. Enqueue the main job into the Redis queue for asynchronous execution.
-        
-        """
-        
+        # 6. Enqueue the main job into the Redis queue for asynchronous execution.        
         q(queue).enqueue(run_main_job, kwargs={
             "files_as_byte_strings": files_as_byte_strings,
             "bash_commands": bash_commands,
             "resource_paths": resource_paths,
             "attachment_paths": attachment_paths,
-            "token": url_params
+            "token": url_params,
+            "service_id":bfabric_web_apps.SERVICE_ID,
+            "charge": charge_run
         })
-      
-        """
 
         # Log that the job was submitted successfully.
         L.log_operation("Info | ORIGIN: rnaseq web app", f"Job submitted successfully to {queue} Redis queue.")
