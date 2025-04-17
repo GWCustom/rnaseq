@@ -10,6 +10,7 @@ from generic.callbacks import app
 from generic.components import no_auth
 from pathlib import Path
 from dash.dash_table import DataTable
+import os
 import pandas as pd
 from bfabric_web_apps.utils.redis_queue import q
 from bfabric_web_apps import run_main_job, get_logger, read_file_as_bytes
@@ -179,31 +180,51 @@ app_specific_layout = dbc.Row(
 # 5) DOCUMENTATION CONTENT
 # ------------------------------------------------------------------------------
 documentation_content = [
-    html.H2("Welcome to Bfabric App Template"),
+    html.H2("Welcome to the B-Fabric + NF-Core RNA-seq App"),
+    html.P("""
+        This app serves as a proof-of-concept for integrating B-Fabric with NF-Core RNA-seq workflows.
+        It demonstrates the capabilities of the new B-Fabric application framework in the context of bulk transcriptomics data processing. 
+        While the current implementation supports standard RNA-seq runs, it may require adaptation for more specific RNA-seq use-cases 
+        or different sequencing platforms.
+    """),
+    html.Br(),
+    html.P("The underlying Nextflow / NF-Core workflow used by this web-app can be found here: https://nf-co.re/rnaseq"),
+    html.Br(),
     html.P(
-        [
-            "This app serves as the user-interface for Bfabric App Template, "
-            "a versatile tool designed to help build and customize new applications."
-        ]
+        "This RNA-seq app is based on the redis_index.py template from the "
+        "bfabric_web_app_templates repository. It simplifies the management and execution of "
+        "Nextflow RNA-seq pipelines through a structured and interactive web interface."
+    ),
+    html.Br(),
+    html.H4("1. User Interface"),
+    html.P(
+        "The GetDataFGet Data From the User section provides an interface for reviewing and modifying input data. "
+        "Users can adjust samples, FASTQ files and GTF files. "
+        "This ensures flexibility and correctness before starting a run."
+    ),
+    html.Br(),
+    html.H4("2. Bfabric Integration"),
+    html.P(
+        "The Get data from B-Fabric section handles communication with the B-Fabric API. "
+        "It fetches required metadata and sample entries from B-Fabric, and converts them into input formats "
+        "that are compatible with the NF-Core RNA-seq pipeline (e.g., sample sheets or configuration files)."
+    ),
+    html.Br(),
+    html.H4("3. Execution of the Main Job"),
+    html.P(
+        "The Submit the Main Job section provides the execution logic for running the NF-Core RNA-seq workflow. "
+        "It handles job preparation, script generation, and queuing of the main analysis task using Redis for "
+        "asynchronous processing and job tracking."
     ),
     html.Br(),
     html.P(
-        [
-            "It is a simple application which allows you to bulk-create resources, "
-            "workunits, and demonstrates how to use the bfabric-web-apps library."
-        ]
-    ),
-    html.Br(),
-    html.P(
-        [
-            "Please check out the official documentation of ",
-            html.A("Bfabric Web Apps", href="https://bfabric-docs.gwc-solutions.ch/index.html"),
-            "."
-        ]
+        "Together, these components—Bfabric integration, user-friendly editing tools, and automated job handling—"
+        "create a powerful environment for launching and managing RNA-seq data analysis workflows."
     )
 ]
 
-app_title = "rnaseq-UI"
+
+app_title = "RNAseq-UI"
 
 # ------------------------------------------------------------------------------
 # 6) SET APPLICATION LAYOUT
@@ -302,6 +323,8 @@ def dataset_to_dictionary(dataset):
     if not dataset:
         return pd.DataFrame()
 
+
+    print("dataset", dataset)
     attributes = dataset.get("attribute", []) 
     items = [elt.get("field") for elt in dataset.get("item", [])]
 
@@ -404,20 +427,64 @@ def load_dataset_to_ui(data, token_data, entity_data):
 
 
 ######################################################################################################
-############################### STEP 3: Submit the Job! ##############################################
+############################### STEP 3: Submit the Main Job! #########################################
 ###################################################################################################### 
 
 # ------------------------------------------------------------------------------
 # 1) FUNCTION TO CREATE RESOURCE PATHS
 # ------------------------------------------------------------------------------
 
-def create_resource_paths(token_data):
+def create_resource_paths():
     pass
 
 
 # ------------------------------------------------------------------------------
 # 2) FUNCTION TO CREATE SAMPLE SHEET CSV
 # ------------------------------------------------------------------------------
+
+def create_sample_sheet_csv(dataset=None):
+    """
+    Create a samplesheet CSV file required for nf-core/rnaseq.
+
+    Assumes dataset is a dictionary containing:
+    - 'Name' for sample names
+    - 'Read1' for R1 FASTQ file paths
+    - 'Read2' for R2 FASTQ file paths
+
+    Output:
+        Creates './samplesheet.csv' in the current directory
+    """
+
+    # Fallback if no dataset provided (e.g., during standalone testing)
+    if dataset is None:
+        raise ValueError("No dataset provided to create_sample_sheet_csv().")
+
+    try:
+        print("dataset", dataset)
+        df = pd.DataFrame(dataset)
+        print("df", df)
+
+        # Ensure necessary columns exist
+        for col in ["Sample", "FASTQ Read 1", "FASTQ Read 2"]:
+            if col not in df.columns:
+                raise KeyError(f"Missing required column in dataset: {col}")
+
+
+        df["fastq_1"] = df["FASTQ Read 1"]
+        df["fastq_2"] = df["FASTQ Read 2"]
+        df["sample"] = df["Sample"]
+        df["strandedness"] = "auto"
+
+        # Final samplesheet
+        samplesheet_df = df[["sample", "fastq_1", "fastq_2", "strandedness"]]
+
+        # Save to CSV
+        samplesheet_df.to_csv("./samplesheet.csv", index=False)
+
+        print("samplesheet.csv created successfully.")
+
+    except Exception as e:
+        print(f"Error while creating samplesheet: {e}")
 
 
 
@@ -443,7 +510,8 @@ def create_resource_paths(token_data):
         State("token_data", "data"),
         State("queue", "value"),
         State("charge_run", "on"),
-        State('url', 'search')
+        State('url', 'search'),
+        State("dataset", "data"),
     ],
     prevent_initial_call=True
 )
@@ -452,7 +520,7 @@ def run_main_job_callback(n_clicks,
                      ram_val, cpu_val,
                      mail_val, fasta_val,
                      gtf_val,
-                     token_data, queue, charge_run, url_params):
+                     token_data, queue, charge_run, url_params, dataset):
     """
     1. Files as bytes -> samplesheets usw
     2. Bash Comments -> Run NF Core pipline
@@ -468,11 +536,14 @@ def run_main_job_callback(n_clicks,
 
 
         # 1. Create samplesheet csv
-
+        create_sample_sheet_csv(dataset)
+        print(dataset)
 
         # 2. Files as bytes -> samplesheets usw
         files_as_byte_strings = {}
 
+        files_as_byte_strings["./samplesheet.csv"] = read_file_as_bytes("./samplesheet.csv")
+        L.log_operation("Info | ORIGIN: rnaseq web app", "Pipeline samplesheet loaded from ./samplesheet.csv.")
         files_as_byte_strings["./NFC_RNA.config"] = read_file_as_bytes("./NFC_RNA.config")
         L.log_operation("Info | ORIGIN: rnaseq web app", "NFC_RNA configuration loaded from ./NFC_RNA.config.")
 
