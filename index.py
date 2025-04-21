@@ -135,6 +135,20 @@ alerts = html.Div(
     style={"margin": "20px"}
 )
 
+# FGCZ Infrastructure Warning Alert
+infra_warning_alert = dbc.Alert(
+    children=[
+        html.H5("Warning: This app does not run on FGCZ infrastructure.", className="alert-heading"),
+        html.P("It was built to demonstrate the generic B-Fabric web app framework. "
+               "Please check the in-app documentation tab for more information.")
+    ],
+    color="warning",
+    is_open=True,
+    dismissable=False,
+    style={"margin": "20px"}
+)
+
+
 # ------------------------------------------------------------------------------
 # 4) MAIN LAYOUT: SIDEBAR + CONTENT
 # ------------------------------------------------------------------------------
@@ -142,12 +156,16 @@ alerts = html.Div(
 app_specific_layout = dbc.Row(
     id="page-content-main",
     children=[
+        dbc.Col(  # <-- NEW COLUMN FOR ALERT
+            html.Div([infra_warning_alert]),
+            width=12
+        ),
         dcc.Loading(alerts),
         modal,  # Modal defined earlier.
         dbc.Col(
             html.Div(
                 id="sidebar",
-                children=sidebar,  # Sidebar content defined earlier.
+                children=sidebar,
                 style={
                     "border-right": "2px solid #d4d7d9",
                     "height": "100%",
@@ -155,14 +173,14 @@ app_specific_layout = dbc.Row(
                     "font-size": "20px"
                 }
             ),
-            width=3,  # Width of the sidebar column.
+            width=3,
         ),
         dbc.Col(
             html.Div(
                 id="page-content",
                 children=[
                     dcc.Store(id="dataset", data={}),
-                    html.Div(id="auth-div")  # Placeholder for `auth-div` to be updated dynamically.
+                    html.Div(id="auth-div")
                 ],
                 style={
                     "margin-top": "2vh",
@@ -170,58 +188,82 @@ app_specific_layout = dbc.Row(
                     "font-size": "20px"
                 }
             ),
-            width=9,  # Width of the main content column.
+            width=9,
         ),
     ],
-    style={"margin-top": "0px", "min-height": "40vh"}  # Overall styling for the row layout.
+    style={"margin-top": "0px", "min-height": "40vh"}
 )
+
 
 # ------------------------------------------------------------------------------
 # 5) DOCUMENTATION CONTENT
 # ------------------------------------------------------------------------------
 documentation_content = [
-    html.H2("Welcome to the B-Fabric + NF-Core RNA-seq App"),
+    html.H2("Welcome to the NF-Core RNA-seq App"),
+
     html.P("""
         This app serves as a proof-of-concept for integrating B-Fabric with NF-Core RNA-seq workflows.
-        It demonstrates the capabilities of the new B-Fabric application framework in the context of bulk transcriptomics data processing. 
-        While the current implementation supports standard RNA-seq runs, it may require adaptation for more specific RNA-seq use-cases 
-        or different sequencing platforms.
+        It demonstrates the capabilities of the new B-Fabric application framework in the context of
+        bulk transcriptomics data processing. While the current implementation supports standard RNA-seq runs,
+        it may require adaptation for other sequencing platforms or specific RNA-seq use cases.
     """),
     html.Br(),
-    html.P("The underlying Nextflow / NF-Core workflow used by this web-app can be found here: https://nf-co.re/rnaseq"),
+
+    html.P("The underlying Nextflow / NF-Core workflow used by this app can be found here: https://nf-co.re/rnaseq"),
     html.Br(),
+
     html.P(
-        "This RNA-seq app is based on the redis_index.py template from the "
+        "This RNA-seq app is built on the redis_index.py template from the "
         "bfabric_web_app_templates repository. It simplifies the management and execution of "
         "Nextflow RNA-seq pipelines through a structured and interactive web interface."
     ),
     html.Br(),
-    html.H4("1. User Interface"),
-    html.P(
-        "The GetDataFGet Data From the User section provides an interface for reviewing and modifying input data. "
-        "Users can adjust samples, FASTQ files and GTF files. "
-        "This ensures flexibility and correctness before starting a run."
-    ),
+
+    html.H4("1. Architecture Overview"),
+    html.Img(src="/assets/architecture.png", style={"width": "100%", "maxWidth": "1000px", "marginBottom": "20px"}),
+    html.P("""
+        The RNA-seq app follows a three-tier architecture involving a local UI server, a compute server,
+        and the B-Fabric system at FGCZ. Users interact with the Dash-based web app hosted on the Local GWC Server.
+        Submitted jobs are sent to the GWC Compute Server via Redis, where the core job function run_main_job()
+        executes the NF-Core RNA-seq pipeline. Pipeline output is stored locally and registered in B-Fabric as
+        linked resources and attachments using the B-Fabric API. These links allow results to appear directly
+        in the B-Fabric interface without duplicating data storage.
+    """),
     html.Br(),
-    html.H4("2. Bfabric Integration"),
-    html.P(
-        "The Get data from B-Fabric section handles communication with the B-Fabric API. "
-        "It fetches required metadata and sample entries from B-Fabric, and converts them into input formats "
-        "that are compatible with the NF-Core RNA-seq pipeline (e.g., sample sheets or configuration files)."
-    ),
+
+    html.H4("2. What is Nextflow?"),
+    html.P("""
+        Nextflow is a data-driven workflow framework that enables scalable and reproducible
+        computational pipelines. It supports parallel and distributed execution across environments
+        like local machines, clusters, and the cloud. NF-Core is a collection of community-curated
+        Nextflow pipelines that follow best practices and support a wide range of biological analysis
+        tasks, including RNA-seq, ATAC-seq, and more.
+    """),
     html.Br(),
-    html.H4("3. Execution of the Main Job"),
-    html.P(
-        "The Submit the Main Job section provides the execution logic for running the NF-Core RNA-seq workflow. "
-        "It handles job preparation, script generation, and queuing of the main analysis task using Redis for "
-        "asynchronous processing and job tracking."
-    ),
+
+    html.H4("3. How the App Works"),
+    html.P("""
+        The app allows users to configure analysis parameters such as CPU/RAM, FASTA/GTF files,
+        and email for notifications. It retrieves relevant sample metadata from B-Fabric using the
+        API and allows users to view and edit the sample sheet within the web UI.
+    """),
+    html.P("""
+        Once configured, the app generates a sample sheet and Nextflow config file, bundles them,
+        and enqueues the job using Redis. The compute server picks up the job, runs the pipeline,
+        stores the output locally, and registers the results as resources and attachments in B-Fabric.
+        This allows users to track outputs and access linked files via the B-Fabric interface.
+    """),
     html.Br(),
-    html.P(
-        "Together, these components—Bfabric integration, user-friendly editing tools, and automated job handling—"
-        "create a powerful environment for launching and managing RNA-seq data analysis workflows."
-    )
+
+    html.H4("4. Summary"),
+    html.P("""
+        By combining a Dash UI, Redis-based job handling, and Nextflow/NF-Core workflows,
+        this RNA-seq app provides a modular and scalable foundation for transcriptomics data processing.
+        While tailored for RNA-seq, the architecture can be extended to other bioinformatics pipelines
+        with minimal changes.
+    """)
 ]
+
 
 
 app_title = "RNAseq-UI"
