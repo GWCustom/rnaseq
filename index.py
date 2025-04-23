@@ -595,7 +595,9 @@ def run_main_job_callback(n_clicks,
         # Define the output directory for the pipeline.
         base_dir = "/STORAGE/OUTPUT_rnaseq"
 
+        bash_commands = []
 
+        '''
         # Construct the bash command to run the nf-core rnaseq pipeline.
         bash_commands = [
 
@@ -613,12 +615,19 @@ def run_main_job_callback(n_clicks,
             > /STORAGE/{base_dir}/nextflow.log 2>&1"""
         ]
 
-
+        '''
         # 4. Create resource paths mapping file or folder to container IDs.
-        resource_paths = {}
+        resource_paths = {
+        '/STORAGE/OUTPUT_rnaseq/fastqc': 37767,
+        '/STORAGE/OUTPUT_rnaseq/fq_lint': 37767,
+        '/STORAGE/OUTPUT_rnaseq/star_salmon/salmon.merged.transcript_tpm.tsv': 37767
+        }
+
 
         # 5. Set attachment paths (e.g., for reports)
-        attachment_paths = {}
+        attachment_paths = {'/STORAGE/OUTPUT_rnaseq/multiqc/star_salmon/multiqc_report.html', 'multiqc_report.html'}
+
+        print(queue)
 
         # 6. Enqueue the main job into the Redis queue for asynchronous execution.        
         q(queue).enqueue(run_main_job, kwargs={
@@ -649,6 +658,6 @@ debug=bfabric_web_apps.DEBUG = True
 # 10) RUN THE APP
 # ------------------------------------------------------------------------------
 if __name__ == "__main__":
-    app.run_server(debug=bfabric_web_apps.DEBUG,
+    app.run(debug=bfabric_web_apps.DEBUG,
                    port=bfabric_web_apps.PORT,
                    host=bfabric_web_apps.HOST)

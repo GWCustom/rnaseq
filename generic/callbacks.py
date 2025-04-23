@@ -68,10 +68,9 @@ def generic_process_url_and_token(url_params):
 
     else:
         # If data is missing, set a generic title.
-        sushi_app_title = "Sushi App Runner"
-        
-    # For the Sushi App Runner, we generalize the app_title: 
-    return token, token_data, entity_data, app_data, sushi_app_title, session_details, dynamic_link
+        app_title = "RNA-seq App"
+
+    return token, token_data, entity_data, app_data, app_title, session_details, dynamic_link
 
 ## Bug Report Handling
 # ---------------------
