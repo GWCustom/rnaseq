@@ -64,7 +64,7 @@ def generic_process_url_and_token(url_params):
 
     if None not in [token, token_data, entity_data, app_data]:
         # If all data is available, set the page title.
-        sushi_app_title = f"{app_data.get('name', 'Unknown App: ')} -- {token_data.get('entityClass_data', 'Unknown Entity')}: {entity_data.get('name', 'Unknown Entity')}"
+        app_title = f"{app_data.get('name', 'Unknown App: ')} -- {token_data.get('entityClass_data', 'Unknown Entity')}: {entity_data.get('name', 'Unknown Entity')}"
 
     else:
         # If data is missing, set a generic title.
