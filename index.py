@@ -200,12 +200,10 @@ app_specific_layout = dbc.Row(
 # ------------------------------------------------------------------------------
 documentation_content = [
     html.H2("Welcome to the NF-Core RNA-seq App"),
-
     html.P("""
         This app serves as a proof-of-concept for integrating B-Fabric with NF-Core RNA-seq workflows.
-        It demonstrates the capabilities of the new B-Fabric application framework in the context of
-        bulk transcriptomics data processing. While the current implementation supports standard RNA-seq runs,
-        it may require adaptation for other sequencing platforms or specific RNA-seq use cases.
+        It demonstrates the capabilities of the new bfabric_web_apps module in the context of
+        bulk transcriptomics data processing.
     """),
     html.Br(),
 
@@ -218,7 +216,6 @@ documentation_content = [
         "Nextflow RNA-seq pipelines through a structured and interactive web interface."
     ),
     html.Br(),
-
     html.H4("1. Architecture Overview"),
     html.Img(src="assets/architecture.png", style={"width": "100%", "maxWidth": "1000px", "marginBottom": "20px"}),
     html.P("""
@@ -226,12 +223,22 @@ documentation_content = [
         and the B-Fabric system at FGCZ. Users interact with the Dash-based web app hosted on the Local GWC Server.
         Submitted jobs are sent to the GWC Compute Server via Redis, where the core job function run_main_job()
         executes the NF-Core RNA-seq pipeline. Pipeline output is stored locally and registered in B-Fabric as
-        linked resources and attachments using the B-Fabric API. These links allow results to appear directly
-        in the B-Fabric interface without duplicating data storage.
+        linked resources and attachments using the B-Fabric API.
     """),
     html.Br(),
-
-    html.H4("2. What is Nextflow?"),
+    html.H4("2. How the App Works"),
+    html.P([
+        "The app is structured into three core steps:",
+        html.Br(),
+        "Step 1: Users input key parameters like CPU/RAM, FASTA/GTF files, and email via the web UI.",
+        html.Br(),
+        "Step 2: The app retrieves sample metadata from B-Fabric through its API and displays it for review and editing.",
+        html.Br(),
+        "Step 3: Upon submission, the app generates necessary config files, enqueues the job to a Redis queue, and triggers execution on the compute server. ",
+        "The compute server runs the NF-Core RNA-seq pipeline and links the resulting output back to B-Fabric as accessible resources and attachments."
+    ]),
+    html.Br(),
+    html.H4("3. What is Nextflow?"),
     html.P("""
         Nextflow is a data-driven workflow framework that enables scalable and reproducible
         computational pipelines. It supports parallel and distributed execution across environments
@@ -240,31 +247,14 @@ documentation_content = [
         tasks, including RNA-seq, ATAC-seq, and more.
     """),
     html.Br(),
-
-    html.H4("3. How the App Works"),
-    html.P("""
-        The app allows users to configure analysis parameters such as CPU/RAM, FASTA/GTF files,
-        and email for notifications. It retrieves relevant sample metadata from B-Fabric using the
-        API and allows users to view and edit the sample sheet within the web UI.
-    """),
-    html.P("""
-        Once configured, the app generates a sample sheet and Nextflow config file, bundles them,
-        and enqueues the job using Redis. The compute server picks up the job, runs the pipeline,
-        stores the output locally, and registers the results as resources and attachments in B-Fabric.
-        This allows users to track outputs and access linked files via the B-Fabric interface.
-    """),
-    html.Br(),
-
     html.H4("4. Summary"),
     html.P("""
         By combining a Dash UI, Redis-based job handling, and Nextflow/NF-Core workflows,
         this RNA-seq app provides a modular and scalable foundation for transcriptomics data processing.
-        While tailored for RNA-seq, the architecture can be extended to other bioinformatics pipelines
-        with minimal changes.
+        It is built using the `bfabric_web_apps` module, which simplifies development by providing reusable
+        components and seamless integration with the B-Fabric system.
     """)
 ]
-
-
 
 app_title = "RNAseq-UI"
 
@@ -617,7 +607,7 @@ def run_main_job_callback(n_clicks,
 
         '''
         # 4. Create resource paths mapping file or folder to container IDs.
-        resource_paths = {'/STORAGE/OUTPUT_rnaseq': 37767,}
+        resource_paths = {'/STORAGE/OUTPUT_rnaseq/star_salmon/featurecounts/Run_1913_1.featureCounts.txt': 37767,}
 
         # 5. Set attachment paths (e.g., for reports)
         attachment_paths = {
@@ -630,6 +620,7 @@ def run_main_job_callback(n_clicks,
             '/STORAGE/OUTPUT_rnaseq/star_salmon/featurecounts/Run_1913_11.featureCounts.txt': 'Run_1913_11.featureCounts.txt',
             '/STORAGE/OUTPUT_rnaseq/star_salmon/featurecounts/Run_1913_12.featureCounts.txt': 'Run_1913_12.featureCounts.txt',
             '/STORAGE/OUTPUT_rnaseq/star_salmon/featurecounts/Run_1913_10.featureCounts.txt': 'Run_1913_10.featureCounts.txt',
+            '/STORAGE/OUTPUT_rnaseq/star_salmon/featurecounts/Run_1913_6.featureCounts.txt': 'Run_1913_6.featureCounts.txt',
             '/STORAGE/OUTPUT_rnaseq/star_salmon/featurecounts/Run_1913_1.featureCounts.txt.summary': 'Run_1913_1.featureCounts.txt.summary',
             '/STORAGE/OUTPUT_rnaseq/multiqc/star_salmon/multiqc_report.html': 'multiqc_report.html',
             '/STORAGE/OUTPUT_rnaseq/star_salmon/qualimap/Run_1913_12/qualimapReport.html': 'qualimapReport.html',
