@@ -294,7 +294,7 @@ app.layout = bfabric_web_apps.get_static_layout(
     app_title,                # The app title we defined previously
     app_specific_layout,      # The main content layout
     documentation_content,    # Documentation content
-    layout_config={"workunits": True, "queue": True, "bug": True}  # Example config
+    layout_config={"workunits": True, "queue": True, "bug": False}  # Example config
 )
 
 # ------------------------------------------------------------------------------
