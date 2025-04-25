@@ -339,6 +339,9 @@ def populate_default_values(entity_data, app_data):
     Returns:
             - name (str): Default job name.
     """
+    if not entity_data:
+        # If no entity data is provided, return default values
+        return "Unknown", None, None
     name = entity_data.get("name", "Unknown")
     fasta = "FASTA_1"
     gtf = "GTF_1"
@@ -358,6 +361,8 @@ def populate_default_values(entity_data, app_data):
     Input("entity", "data"),
 )
 def update_dataset(entity_data):
+    if not entity_data: 
+        return {}
     df = dataset_to_dictionary(entity_data.get("full_api_response", {}))
     return df
 
