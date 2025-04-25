@@ -15,12 +15,10 @@ import pandas as pd
 from bfabric_web_apps.utils.redis_queue import q
 from bfabric_web_apps import run_main_job, get_logger, read_file_as_bytes
 
-bfabric_web_apps.DEBUG = True  # Set to True for debugging mode
-
-
 ######################################################################################################
 ####################### STEP 1: Get Data From the User! ##############################################
 ######################################################################################################
+
 
 # ------------------------------------------------------------------------------
 # 1) SIDEBAR DEFINITION
@@ -170,7 +168,10 @@ app_specific_layout = dbc.Row(
                     "border-right": "2px solid #d4d7d9",
                     "height": "100%",
                     "padding": "20px",
-                    "font-size": "20px"
+                    "font-size": "20px",
+                    "overflowY": "scroll",
+                    "maxHeight": "54vh",
+                    "overflowX": "hidden",
                 }
             ),
             width=3,
@@ -206,10 +207,29 @@ documentation_content = [
         bulk transcriptomics data processing.
     """),
     html.Br(),
-
-    html.P("The underlying Nextflow / NF-Core workflow used by this app can be found here: https://nf-co.re/rnaseq"),
+    html.P([
+        "The underlying Nextflow / NF-Core workflow used by this app can be found ",
+        html.A("here", href="https://nf-co.re/rnaseq", target="_blank"),
+        "."
+    ]),
     html.Br(),
-
+    html.P([
+        "The RNA-seq app project source code is available on GitHub: ",
+        html.A("rnaseq GitHub repository", href="https://github.com/GWCustom/rnaseq", target="_blank"),
+        "."
+    ]),
+    html.Br(),
+    html.P([
+        "The bfabric_web_apps Python library, which generalizes concepts for creating and invoking B-Fabric-based web applications, is available here: ",
+        html.A("bfabric-web-apps GitHub repository", href="https://github.com/GWCustom/bfabric-web-apps", target="_blank"),
+        "."
+    ]),
+    html.P([
+        "The documentation for the bfabric_web_apps library can be found here: ",
+        html.A("bfabric-web-apps Documentation", href="https://bfabric-docs.gwc-solutions.ch/", target="_blank"),
+        "."
+    ]),
+    html.Br(),
     html.P(
         "This RNA-seq app is built on the redis_index.py template from the "
         "bfabric_web_app_templates repository. It simplifies the management and execution of "
@@ -217,7 +237,7 @@ documentation_content = [
     ),
     html.Br(),
     html.H4("1. Architecture Overview"),
-    html.Img(src="assets/architecture.png", style={"width": "100%", "maxWidth": "1000px", "marginBottom": "20px"}),
+    html.Img(src="https://i.imgur.com/JgOI3Xx.jpeg", style={"width": "100%", "maxWidth": "1000px", "marginBottom": "20px"}),
     html.P("""
         The RNA-seq app follows a three-tier architecture involving a local UI server, a compute server,
         and the B-Fabric system at FGCZ. Users interact with the Dash-based web app hosted on the Local GWC Server.
@@ -227,15 +247,14 @@ documentation_content = [
     """),
     html.Br(),
     html.H4("2. How the App Works"),
-    html.P([
-        "The app is structured into three core steps:",
-        html.Br(),
-        "Step 1: Users input key parameters like CPU/RAM, FASTA/GTF files, and email via the web UI.",
-        html.Br(),
-        "Step 2: The app retrieves sample metadata from B-Fabric through its API and displays it for review and editing.",
-        html.Br(),
-        "Step 3: Upon submission, the app generates necessary config files, enqueues the job to a Redis queue, and triggers execution on the compute server. ",
-        "The compute server runs the NF-Core RNA-seq pipeline and links the resulting output back to B-Fabric as accessible resources and attachments."
+    html.Div([
+    html.P("The app is structured into three core steps:"),
+    html.Ul([
+        html.Li("Step 1: Users input key parameters like CPU/RAM, FASTA/GTF files, and email via the web UI."),
+        html.Li("Step 2: The app retrieves sample metadata from B-Fabric through its API and displays it for review and editing."),
+        html.Li("Step 3: Upon submission, the app generates necessary config files, enqueues the job to a Redis queue, and triggers execution on the compute server. "
+                "The compute server runs the NF-Core RNA-seq pipeline and links the resulting output back to B-Fabric as accessible resources and attachments.")
+        ])
     ]),
     html.Br(),
     html.H4("3. What is Nextflow?"),
@@ -247,6 +266,15 @@ documentation_content = [
         tasks, including RNA-seq, ATAC-seq, and more.
     """),
     html.Br(),
+
+    html.P("""
+        The NF-Core RNA-seq pipeline is a widely used workflow for analyzing RNA sequencing data.
+        It provides a comprehensive set of tools for quality control, alignment, quantification,
+        and differential expression analysis. The pipeline is designed to be flexible and customizable,
+        allowing users to adapt it to their specific needs and datasets. A visual representation of the pipeline
+           can be found below:"""), 
+    html.Img(src="https://raw.githubusercontent.com/nf-core/rnaseq/3.14.0//docs/images/nf-core-rnaseq_metro_map_grey.png", style={"width": "100%", "maxWidth": "1000px", "marginBottom": "20px"}),
+    html.Br(), 
     html.H4("4. Summary"),
     html.P("""
         By combining a Dash UI, Redis-based job handling, and Nextflow/NF-Core workflows,
@@ -256,7 +284,7 @@ documentation_content = [
     """)
 ]
 
-app_title = "RNAseq-UI"
+app_title = "Nextflow RNAseq UI"
 
 # ------------------------------------------------------------------------------
 # 6) SET APPLICATION LAYOUT
@@ -266,7 +294,7 @@ app.layout = bfabric_web_apps.get_static_layout(
     app_title,                # The app title we defined previously
     app_specific_layout,      # The main content layout
     documentation_content,    # Documentation content
-    layout_config={"workunits": True, "queue": False, "bug": True}  # Example config
+    layout_config={"workunits": True, "queue": True, "bug": True}  # Example config
 )
 
 # ------------------------------------------------------------------------------
@@ -611,16 +639,6 @@ def run_main_job_callback(n_clicks,
 
         # 5. Set attachment paths (e.g., for reports)
         attachment_paths = {
-            '/STORAGE/OUTPUT_rnaseq/star_salmon/featurecounts/Run_1913_1.featureCounts.txt': 'Run_1913_1.featureCounts.txt',
-            '/STORAGE/OUTPUT_rnaseq/star_salmon/featurecounts/Run_1913_4.featureCounts.txt': 'Run_1913_4.featureCounts.txt',
-            '/STORAGE/OUTPUT_rnaseq/star_salmon/featurecounts/Run_1913_8.featureCounts.txt': 'Run_1913_8.featureCounts.txt',
-            '/STORAGE/OUTPUT_rnaseq/star_salmon/featurecounts/Run_1913_3.featureCounts.txt': 'Run_1913_3.featureCounts.txt',
-            '/STORAGE/OUTPUT_rnaseq/star_salmon/featurecounts/Run_1913_2.featureCounts.txt': 'Run_1913_2.featureCounts.txt',
-            '/STORAGE/OUTPUT_rnaseq/star_salmon/featurecounts/Run_1913_9.featureCounts.txt': 'Run_1913_9.featureCounts.txt',
-            '/STORAGE/OUTPUT_rnaseq/star_salmon/featurecounts/Run_1913_11.featureCounts.txt': 'Run_1913_11.featureCounts.txt',
-            '/STORAGE/OUTPUT_rnaseq/star_salmon/featurecounts/Run_1913_12.featureCounts.txt': 'Run_1913_12.featureCounts.txt',
-            '/STORAGE/OUTPUT_rnaseq/star_salmon/featurecounts/Run_1913_10.featureCounts.txt': 'Run_1913_10.featureCounts.txt',
-            '/STORAGE/OUTPUT_rnaseq/star_salmon/featurecounts/Run_1913_6.featureCounts.txt': 'Run_1913_6.featureCounts.txt',
             '/STORAGE/OUTPUT_rnaseq/star_salmon/featurecounts/Run_1913_1.featureCounts.txt.summary': 'Run_1913_1.featureCounts.txt.summary',
             '/STORAGE/OUTPUT_rnaseq/multiqc/star_salmon/multiqc_report.html': 'multiqc_report.html',
             '/STORAGE/OUTPUT_rnaseq/star_salmon/qualimap/Run_1913_12/qualimapReport.html': 'qualimapReport.html',
@@ -665,12 +683,11 @@ def run_main_job_callback(n_clicks,
         return False, True, f"Job submission failed: {str(e)}", "Job submission failed"
 
 
-debug=bfabric_web_apps.DEBUG = True
-
 # ------------------------------------------------------------------------------
 # 10) RUN THE APP
 # ------------------------------------------------------------------------------
 if __name__ == "__main__":
+
     app.run(debug=bfabric_web_apps.DEBUG,
                    port=bfabric_web_apps.PORT,
                    host=bfabric_web_apps.HOST)
