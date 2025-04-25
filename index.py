@@ -606,38 +606,21 @@ def run_main_job_callback(n_clicks,
         ]
 
         '''
+
+        project_id = 37767
+
+        # Update charge_run based on its value
+        if charge_run and project_id:
+            charge_run = [project_id]
+
         # 4. Create resource paths mapping file or folder to container IDs.
-        resource_paths = {'/STORAGE/OUTPUT_rnaseq/star_salmon/featurecounts/Run_1913_1.featureCounts.txt': 37767,}
+        resource_paths = {'/STORAGE/OUTPUT_rnaseq/star_salmon/featurecounts/Run_1913_1.featureCounts.txt': 37767}
 
         # 5. Set attachment paths (e.g., for reports)
         attachment_paths = {
             '/STORAGE/OUTPUT_rnaseq/star_salmon/featurecounts/Run_1913_1.featureCounts.txt': 'Run_1913_1.featureCounts.txt',
             '/STORAGE/OUTPUT_rnaseq/star_salmon/featurecounts/Run_1913_4.featureCounts.txt': 'Run_1913_4.featureCounts.txt',
             '/STORAGE/OUTPUT_rnaseq/star_salmon/featurecounts/Run_1913_8.featureCounts.txt': 'Run_1913_8.featureCounts.txt',
-            '/STORAGE/OUTPUT_rnaseq/star_salmon/featurecounts/Run_1913_3.featureCounts.txt': 'Run_1913_3.featureCounts.txt',
-            '/STORAGE/OUTPUT_rnaseq/star_salmon/featurecounts/Run_1913_2.featureCounts.txt': 'Run_1913_2.featureCounts.txt',
-            '/STORAGE/OUTPUT_rnaseq/star_salmon/featurecounts/Run_1913_9.featureCounts.txt': 'Run_1913_9.featureCounts.txt',
-            '/STORAGE/OUTPUT_rnaseq/star_salmon/featurecounts/Run_1913_11.featureCounts.txt': 'Run_1913_11.featureCounts.txt',
-            '/STORAGE/OUTPUT_rnaseq/star_salmon/featurecounts/Run_1913_12.featureCounts.txt': 'Run_1913_12.featureCounts.txt',
-            '/STORAGE/OUTPUT_rnaseq/star_salmon/featurecounts/Run_1913_10.featureCounts.txt': 'Run_1913_10.featureCounts.txt',
-            '/STORAGE/OUTPUT_rnaseq/star_salmon/featurecounts/Run_1913_6.featureCounts.txt': 'Run_1913_6.featureCounts.txt',
-            '/STORAGE/OUTPUT_rnaseq/star_salmon/featurecounts/Run_1913_1.featureCounts.txt.summary': 'Run_1913_1.featureCounts.txt.summary',
-            '/STORAGE/OUTPUT_rnaseq/multiqc/star_salmon/multiqc_report.html': 'multiqc_report.html',
-            '/STORAGE/OUTPUT_rnaseq/star_salmon/qualimap/Run_1913_12/qualimapReport.html': 'qualimapReport.html',
-            '/STORAGE/OUTPUT_rnaseq/star_salmon/qualimap/Run_1913_11/qualimapReport.html': 'qualimapReport.html',
-            '/STORAGE/OUTPUT_rnaseq/star_salmon/qualimap/Run_1913_10/qualimapReport.html': 'qualimapReport.html',
-            '/STORAGE/OUTPUT_rnaseq/star_salmon/qualimap/Run_1913_9/qualimapReport.html': 'qualimapReport.html',
-            '/STORAGE/OUTPUT_rnaseq/star_salmon/qualimap/Run_1913_6/qualimapReport.html': 'qualimapReport.html',
-            '/STORAGE/OUTPUT_rnaseq/star_salmon/qualimap/Run_1913_2/qualimapReport.html': 'qualimapReport.html',
-            '/STORAGE/OUTPUT_rnaseq/star_salmon/qualimap/Run_1913_4/qualimapReport.html': 'qualimapReport.html',
-            '/STORAGE/OUTPUT_rnaseq/star_salmon/qualimap/Run_1913_1/qualimapReport.html': 'qualimapReport.html',
-            '/STORAGE/OUTPUT_rnaseq/star_salmon/qualimap/Run_1913_3/qualimapReport.html': 'qualimapReport.html',
-            '/STORAGE/OUTPUT_rnaseq/star_salmon/qualimap/Run_1913_8/qualimapReport.html': 'qualimapReport.html',
-            '/STORAGE/OUTPUT_rnaseq/star_salmon/deseq2_qc/deseq2.plots.pdf': 'deseq2.plots.pdf',
-            '/STORAGE/OUTPUT_rnaseq/pipeline_info/execution_report_2025-04-17_11-45-38.html': 'execution_report_2025-04-17_11-45-38.html',
-            '/STORAGE/OUTPUT_rnaseq/pipeline_info/execution_report_2025-04-13_18-12-15.html': 'execution_report_2025-04-13_18-12-15.html',
-            '/STORAGE/OUTPUT_rnaseq/pipeline_info/execution_report_2025-04-09_12-24-13.html': 'execution_report_2025-04-09_12-24-13.html',
-            '/STORAGE/OUTPUT_rnaseq/pipeline_info/execution_report_2025-04-17_11-37-16.html': 'execution_report_2025-04-17_11-37-16.html',
             '/STORAGE/OUTPUT_rnaseq/pipeline_info/execution_report_2025-04-15_14-16-40.html': 'execution_report_2025-04-15_14-16-40.html'
         }
 
@@ -652,6 +635,7 @@ def run_main_job_callback(n_clicks,
             "service_id":bfabric_web_apps.SERVICE_ID,
             "charge": charge_run
         })
+
 
         # Log that the job was submitted successfully.
         L.log_operation("Info | ORIGIN: rnaseq web app", f"Job submitted successfully to {queue} Redis queue.")
