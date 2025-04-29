@@ -614,16 +614,31 @@ def run_main_job_callback(n_clicks,
             charge_run = [project_id]
 
         # 4. Create resource paths mapping file or folder to container IDs.
-        resource_paths = {'/STORAGE/OUTPUT_rnaseq/star_salmon/featurecounts/Run_1913_1.featureCounts.txt': 37767}
+        resource_paths = {'/STORAGE/OUTPUT_rnaseq': 37767}
 
         # 5. Set attachment paths (e.g., for reports)
         attachment_paths = {
-            '/STORAGE/OUTPUT_rnaseq/star_salmon/featurecounts/Run_1913_1.featureCounts.txt': 'Run_1913_1.featureCounts.txt',
-            '/STORAGE/OUTPUT_rnaseq/star_salmon/featurecounts/Run_1913_4.featureCounts.txt': 'Run_1913_4.featureCounts.txt',
-            '/STORAGE/OUTPUT_rnaseq/star_salmon/featurecounts/Run_1913_8.featureCounts.txt': 'Run_1913_8.featureCounts.txt',
-            '/STORAGE/OUTPUT_rnaseq/pipeline_info/execution_report_2025-04-15_14-16-40.html': 'execution_report_2025-04-15_14-16-40.html'
+            '/STORAGE/OUTPUT_rnaseq/multiqc/star_salmon/multiqc_report.html': 'multiqc_report.html',
+            '/STORAGE/OUTPUT_rnaseq/star_salmon/qualimap/Run_1913_12/qualimapReport.html': 'qualimapReport.html',
+            '/STORAGE/OUTPUT_rnaseq/star_salmon/qualimap/Run_1913_11/qualimapReport.html': 'qualimapReport.html',
+            '/STORAGE/OUTPUT_rnaseq/star_salmon/qualimap/Run_1913_10/qualimapReport.html': 'qualimapReport.html',
+            '/STORAGE/OUTPUT_rnaseq/star_salmon/qualimap/Run_1913_9/qualimapReport.html': 'qualimapReport.html',
+            '/STORAGE/OUTPUT_rnaseq/star_salmon/qualimap/Run_1913_6/qualimapReport.html': 'qualimapReport.html',
+            '/STORAGE/OUTPUT_rnaseq/star_salmon/qualimap/Run_1913_2/qualimapReport.html': 'qualimapReport.html',
+            '/STORAGE/OUTPUT_rnaseq/star_salmon/qualimap/Run_1913_4/qualimapReport.html': 'qualimapReport.html',
+            '/STORAGE/OUTPUT_rnaseq/star_salmon/qualimap/Run_1913_1/qualimapReport.html': 'qualimapReport.html',
+            '/STORAGE/OUTPUT_rnaseq/star_salmon/qualimap/Run_1913_3/qualimapReport.html': 'qualimapReport.html',
+            '/STORAGE/OUTPUT_rnaseq/star_salmon/qualimap/Run_1913_8/qualimapReport.html': 'qualimapReport.html',
+            '/STORAGE/OUTPUT_rnaseq/star_salmon/deseq2_qc/deseq2.plots.pdf': 'deseq2.plots.pdf',
+            '/STORAGE/OUTPUT_rnaseq/pipeline_info/execution_report_2025-04-17_11-45-38.html': 'execution_report_2025-04-17_11-45-38.html',
+            '/STORAGE/OUTPUT_rnaseq/pipeline_info/execution_report_2025-04-13_18-12-15.html': 'execution_report_2025-04-13_18-12-15.html',
+            '/STORAGE/OUTPUT_rnaseq/pipeline_info/execution_report_2025-04-09_12-24-13.html': 'execution_report_2025-04-09_12-24-13.html',
+            '/STORAGE/OUTPUT_rnaseq/pipeline_info/execution_report_2025-04-17_11-37-16.html': 'execution_report_2025-04-17_11-37-16.html',
+            '/STORAGE/OUTPUT_rnaseq/pipeline_info/execution_report_2025-04-15_14-16-40.html': 'execution_report_2025-04-15_14-16-40.html',
+            '/STORAGE/OUTPUT_rnaseq/multiqc/star_salmon/multiqc_report_plots/pdf/fastqc_raw_per_base_sequence_quality_plot.pdf': 'fastqc_raw_per_base_sequence_quality_plot.pdf',
+            '/STORAGE/OUTPUT_rnaseq/multiqc/star_salmon/multiqc_report_plots/pdf/general_stats_table.pdf': 'general_stats_table.pdf',
+            '/STORAGE/OUTPUT_rnaseq/multiqc/star_salmon/multiqc_report_plots/pdf/dupradar.pdf': 'dupradar.pdf',
         }
-
 
         # 6. Enqueue the main job into the Redis queue for asynchronous execution.        
         q(queue).enqueue(run_main_job, kwargs={
