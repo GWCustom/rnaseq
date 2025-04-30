@@ -639,12 +639,18 @@ def run_main_job_callback(n_clicks,
         ]
 
         '''
+
+        project_id = 37767
+
+        # Update charge_run based on its value
+        if charge_run and project_id:
+            charge_run = [project_id]
+
         # 4. Create resource paths mapping file or folder to container IDs.
-        resource_paths = {'/STORAGE/OUTPUT_rnaseq/star_salmon/featurecounts/Run_1913_1.featureCounts.txt': 37767,}
+        resource_paths = {'/STORAGE/OUTPUT_rnaseq': 37767}
 
         # 5. Set attachment paths (e.g., for reports)
         attachment_paths = {
-            '/STORAGE/OUTPUT_rnaseq/star_salmon/featurecounts/Run_1913_1.featureCounts.txt.summary': 'Run_1913_1.featureCounts.txt.summary',
             '/STORAGE/OUTPUT_rnaseq/multiqc/star_salmon/multiqc_report.html': 'multiqc_report.html',
             '/STORAGE/OUTPUT_rnaseq/star_salmon/qualimap/Run_1913_12/qualimapReport.html': 'qualimapReport.html',
             '/STORAGE/OUTPUT_rnaseq/star_salmon/qualimap/Run_1913_11/qualimapReport.html': 'qualimapReport.html',
@@ -661,9 +667,11 @@ def run_main_job_callback(n_clicks,
             '/STORAGE/OUTPUT_rnaseq/pipeline_info/execution_report_2025-04-13_18-12-15.html': 'execution_report_2025-04-13_18-12-15.html',
             '/STORAGE/OUTPUT_rnaseq/pipeline_info/execution_report_2025-04-09_12-24-13.html': 'execution_report_2025-04-09_12-24-13.html',
             '/STORAGE/OUTPUT_rnaseq/pipeline_info/execution_report_2025-04-17_11-37-16.html': 'execution_report_2025-04-17_11-37-16.html',
-            '/STORAGE/OUTPUT_rnaseq/pipeline_info/execution_report_2025-04-15_14-16-40.html': 'execution_report_2025-04-15_14-16-40.html'
+            '/STORAGE/OUTPUT_rnaseq/pipeline_info/execution_report_2025-04-15_14-16-40.html': 'execution_report_2025-04-15_14-16-40.html',
+            '/STORAGE/OUTPUT_rnaseq/multiqc/star_salmon/multiqc_report_plots/pdf/fastqc_raw_per_base_sequence_quality_plot.pdf': 'fastqc_raw_per_base_sequence_quality_plot.pdf',
+            '/STORAGE/OUTPUT_rnaseq/multiqc/star_salmon/multiqc_report_plots/pdf/general_stats_table.pdf': 'general_stats_table.pdf',
+            '/STORAGE/OUTPUT_rnaseq/multiqc/star_salmon/multiqc_report_plots/pdf/dupradar.pdf': 'dupradar.pdf',
         }
-
 
         # 6. Enqueue the main job into the Redis queue for asynchronous execution.        
         q(queue).enqueue(run_main_job, kwargs={
@@ -675,6 +683,7 @@ def run_main_job_callback(n_clicks,
             "service_id":bfabric_web_apps.SERVICE_ID,
             "charge": charge_run
         })
+
 
         # Log that the job was submitted successfully.
         L.log_operation("Info | ORIGIN: rnaseq web app", f"Job submitted successfully to {queue} Redis queue.")
