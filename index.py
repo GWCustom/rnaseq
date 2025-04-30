@@ -14,9 +14,7 @@ import os
 import pandas as pd
 from bfabric_web_apps.utils.redis_queue import q
 from bfabric_web_apps import run_main_job, get_logger, read_file_as_bytes
-
-bfabric_web_apps.DEBUG = True  # Set to True for debugging mode
-
+from datetime import datetime
 
 ######################################################################################################
 ####################### STEP 1: Get Data From the User! ##############################################
@@ -355,8 +353,6 @@ def dataset_to_dictionary(dataset):
     if not dataset:
         return pd.DataFrame()
 
-
-    print("dataset", dataset)
     attributes = dataset.get("attribute", []) 
     items = [elt.get("field") for elt in dataset.get("item", [])]
 
@@ -462,16 +458,11 @@ def load_dataset_to_ui(data, token_data, entity_data):
 ############################### STEP 3: Submit the Main Job! #########################################
 ###################################################################################################### 
 
-# ------------------------------------------------------------------------------
-# 1) FUNCTION TO CREATE RESOURCE PATHS
-# ------------------------------------------------------------------------------
 
-def create_resource_paths():
-    pass
 
 
 # ------------------------------------------------------------------------------
-# 2) FUNCTION TO CREATE SAMPLE SHEET CSV
+# 1) FUNCTION TO CREATE SAMPLE SHEET CSV
 # ------------------------------------------------------------------------------
 
 def create_sample_sheet_csv(dataset=None):
@@ -492,9 +483,7 @@ def create_sample_sheet_csv(dataset=None):
         raise ValueError("No dataset provided to create_sample_sheet_csv().")
 
     try:
-        print("dataset", dataset)
         df = pd.DataFrame(dataset)
-        print("df", df)
 
         # Ensure necessary columns exist
         for col in ["Sample", "FASTQ Read 1", "FASTQ Read 2"]:
@@ -521,7 +510,7 @@ def create_sample_sheet_csv(dataset=None):
 
 
 # ------------------------------------------------------------------------------
-# 3) CALLBACK TO RUN MAIN JOB
+# 2) CALLBACK TO RUN MAIN JOB
 # ------------------------------------------------------------------------------
 @app.callback(
     [
@@ -569,7 +558,6 @@ def run_main_job_callback(n_clicks,
 
         # 1. Create samplesheet csv
         create_sample_sheet_csv(dataset)
-        print(dataset)
 
         # 2. Files as bytes -> samplesheets usw
         files_as_byte_strings = {}
@@ -581,63 +569,58 @@ def run_main_job_callback(n_clicks,
 
         # 3. Bash command
 
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        output_dir = "/STORAGE/OUTPUT_rnaseq_" + timestamp
+        work_dir = "/STORAGE/temp_rnaseq_run"
 
-        # Define the output directory for the pipeline.
-        base_dir = "/STORAGE/OUTPUT_rnaseq"
+        run_pipeline_command = (
+            f"/home/nfc/.local/bin/nextflow run nf-core/rnaseq "
+            f"--input {work_dir}/samplesheet.csv "
+            f"--fasta {work_dir}/fasta_and_gtf_files/Homo_sapiens.GRCh38.dna.primary_assembly.fa "
+            f"--gtf {work_dir}/fasta_and_gtf_files/Homo_sapiens.GRCh38.109.gtf "
+            f"--skip_trimming "
+            f"--outdir {output_dir} "
+            f"-profile docker "
+            f"--custom_config_base {work_dir}"
+        )
 
-        bash_commands = []
+        # Use echo in subprocess
+        bash_command = f'echo "{run_pipeline_command}"'
+        create_out_dir = f"mkdir {output_dir}"
+        delete_old_work_dir = f"rm -Rf {work_dir}/work"
 
-        '''
-        # Construct the bash command to run the nf-core rnaseq pipeline.
-        bash_commands = [
-
-            "rm -rf /APPLICATION/temp_rnaseq_run/work"
-            ,
-            f"""/home/nfc/.local/bin/nextflow run nf-core/rnaseq \
-            -profile docker \
-            --input /APPLICATION/temp_rnaseq_run/samplesheet.csv \
-            --fasta /APPLICATION/temp_rnaseq_run/fasta_and_gtf_files/Homo_sapiens.GRCh38.dna.primary_assembly.fa \
-            --gtf /APPLICATION/temp_rnaseq_run/fasta_and_gtf_files/Homo_sapiens.GRCh38.109.gtf \
-            --skip_trimming \
-            --outdir {base_dir} \
-            --max_cpus 6 \
-            -c /APPLICATION/temp_rnaseq_run/NFC_RNA.config \
-            > /STORAGE/{base_dir}/nextflow.log 2>&1"""
-        ]
-
-        '''
+        bash_commands = [delete_old_work_dir, create_out_dir ,bash_command]
 
         project_id = 37767
 
         # Update charge_run based on its value
         if charge_run and project_id:
             charge_run = [project_id]
+        else:
+            charge_run = []
+
 
         # 4. Create resource paths mapping file or folder to container IDs.
-        resource_paths = {'/STORAGE/OUTPUT_rnaseq': 37767}
+        resource_paths = {f'{output_dir}': 37767}
 
         # 5. Set attachment paths (e.g., for reports)
         attachment_paths = {
-            '/STORAGE/OUTPUT_rnaseq/multiqc/star_salmon/multiqc_report.html': 'multiqc_report.html',
-            '/STORAGE/OUTPUT_rnaseq/star_salmon/qualimap/Run_1913_12/qualimapReport.html': 'qualimapReport.html',
-            '/STORAGE/OUTPUT_rnaseq/star_salmon/qualimap/Run_1913_11/qualimapReport.html': 'qualimapReport.html',
-            '/STORAGE/OUTPUT_rnaseq/star_salmon/qualimap/Run_1913_10/qualimapReport.html': 'qualimapReport.html',
-            '/STORAGE/OUTPUT_rnaseq/star_salmon/qualimap/Run_1913_9/qualimapReport.html': 'qualimapReport.html',
-            '/STORAGE/OUTPUT_rnaseq/star_salmon/qualimap/Run_1913_6/qualimapReport.html': 'qualimapReport.html',
-            '/STORAGE/OUTPUT_rnaseq/star_salmon/qualimap/Run_1913_2/qualimapReport.html': 'qualimapReport.html',
-            '/STORAGE/OUTPUT_rnaseq/star_salmon/qualimap/Run_1913_4/qualimapReport.html': 'qualimapReport.html',
-            '/STORAGE/OUTPUT_rnaseq/star_salmon/qualimap/Run_1913_1/qualimapReport.html': 'qualimapReport.html',
-            '/STORAGE/OUTPUT_rnaseq/star_salmon/qualimap/Run_1913_3/qualimapReport.html': 'qualimapReport.html',
-            '/STORAGE/OUTPUT_rnaseq/star_salmon/qualimap/Run_1913_8/qualimapReport.html': 'qualimapReport.html',
-            '/STORAGE/OUTPUT_rnaseq/star_salmon/deseq2_qc/deseq2.plots.pdf': 'deseq2.plots.pdf',
-            '/STORAGE/OUTPUT_rnaseq/pipeline_info/execution_report_2025-04-17_11-45-38.html': 'execution_report_2025-04-17_11-45-38.html',
-            '/STORAGE/OUTPUT_rnaseq/pipeline_info/execution_report_2025-04-13_18-12-15.html': 'execution_report_2025-04-13_18-12-15.html',
-            '/STORAGE/OUTPUT_rnaseq/pipeline_info/execution_report_2025-04-09_12-24-13.html': 'execution_report_2025-04-09_12-24-13.html',
-            '/STORAGE/OUTPUT_rnaseq/pipeline_info/execution_report_2025-04-17_11-37-16.html': 'execution_report_2025-04-17_11-37-16.html',
-            '/STORAGE/OUTPUT_rnaseq/pipeline_info/execution_report_2025-04-15_14-16-40.html': 'execution_report_2025-04-15_14-16-40.html',
-            '/STORAGE/OUTPUT_rnaseq/multiqc/star_salmon/multiqc_report_plots/pdf/fastqc_raw_per_base_sequence_quality_plot.pdf': 'fastqc_raw_per_base_sequence_quality_plot.pdf',
-            '/STORAGE/OUTPUT_rnaseq/multiqc/star_salmon/multiqc_report_plots/pdf/general_stats_table.pdf': 'general_stats_table.pdf',
-            '/STORAGE/OUTPUT_rnaseq/multiqc/star_salmon/multiqc_report_plots/pdf/dupradar.pdf': 'dupradar.pdf',
+            f'{output_dir}/multiqc/star_salmon/multiqc_report.html': 'multiqc_report.html',
+            f'{output_dir}/star_salmon/qualimap/Run_1913_12/qualimapReport.html': 'qualimapReport.html',
+            f'{output_dir}/star_salmon/qualimap/Run_1913_11/qualimapReport.html': 'qualimapReport.html',
+            f'{output_dir}/star_salmon/qualimap/Run_1913_10/qualimapReport.html': 'qualimapReport.html',
+            f'{output_dir}/star_salmon/qualimap/Run_1913_9/qualimapReport.html': 'qualimapReport.html',
+            f'{output_dir}/star_salmon/qualimap/Run_1913_6/qualimapReport.html': 'qualimapReport.html',
+            f'{output_dir}/star_salmon/qualimap/Run_1913_2/qualimapReport.html': 'qualimapReport.html',
+            f'{output_dir}/star_salmon/qualimap/Run_1913_4/qualimapReport.html': 'qualimapReport.html',
+            f'{output_dir}/star_salmon/qualimap/Run_1913_1/qualimapReport.html': 'qualimapReport.html',
+            f'{output_dir}/star_salmon/qualimap/Run_1913_3/qualimapReport.html': 'qualimapReport.html',
+            f'{output_dir}/star_salmon/qualimap/Run_1913_8/qualimapReport.html': 'qualimapReport.html',
+            f'{output_dir}/star_salmon/deseq2_qc/deseq2.plots.pdf': 'deseq2.plots.pdf',
+            f'{output_dir}/pipeline_info/execution_report_2025-04-17_11-45-38.html': 'execution_report_2025-04-17_11-45-38.html',
+            f'{output_dir}/multiqc/star_salmon/multiqc_report_plots/pdf/fastqc_raw_per_base_sequence_quality_plot.pdf': 'fastqc_raw_per_base_sequence_quality_plot.pdf',
+            f'{output_dir}/multiqc/star_salmon/multiqc_report_plots/pdf/general_stats_table.pdf': 'general_stats_table.pdf',
+            f'{output_dir}/multiqc/star_salmon/multiqc_report_plots/pdf/dupradar.pdf': 'dupradar.pdf',
         }
 
         # 6. Enqueue the main job into the Redis queue for asynchronous execution.        
@@ -663,8 +646,6 @@ def run_main_job_callback(n_clicks,
         # If an error occurs, return failure alert open with the error message.
         return False, True, f"Job submission failed: {str(e)}", "Job submission failed"
 
-
-debug=bfabric_web_apps.DEBUG = True
 
 # ------------------------------------------------------------------------------
 # 10) RUN THE APP
