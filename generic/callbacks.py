@@ -44,7 +44,7 @@ app = create_app()
         Output('entity', 'data'),               # Store entity data.
         Output('app_data', 'data'),             # Store app data.
         Output('page-title', 'children'),       # Update page title.
-        Output('session-details', 'children'),  # Update session details.
+        # Output('session-details', 'children'),  # Update session details.
         Output('dynamic-link', 'href')          # Directly update the button!
     ],
     [Input('url', 'search')]                    # Extract token from URL parameters.
@@ -64,14 +64,14 @@ def generic_process_url_and_token(url_params):
 
     if None not in [token, token_data, entity_data, app_data]:
         # If all data is available, set the page title.
-        sushi_app_title = f"{app_data.get('name', 'Unknown App: ')} -- {token_data.get('entityClass_data', 'Unknown Entity')}: {entity_data.get('name', 'Unknown Entity')}"
+        app_title = f"{app_data.get('name', 'Unknown App: ')} -- {token_data.get('entityClass_data', 'Unknown Entity')}: {entity_data.get('name', 'Unknown Entity')}"
 
     else:
         # If data is missing, set a generic title.
-        sushi_app_title = "Sushi App Runner"
-        
-    # For the Sushi App Runner, we generalize the app_title: 
-    return token, token_data, entity_data, app_data, sushi_app_title, session_details, dynamic_link
+        app_title = "RNA-seq App"
+
+    # return token, token_data, entity_data, app_data, app_title, session_details, dynamic_link
+    return token, token_data, entity_data, app_data, app_title, dynamic_link
 
 ## Bug Report Handling
 # ---------------------
