@@ -44,7 +44,7 @@ app = create_app()
         Output('entity', 'data'),               # Store entity data.
         Output('app_data', 'data'),             # Store app data.
         Output('page-title', 'children'),       # Update page title.
-        Output('session-details', 'children'),  # Update session details.
+        # Output('session-details', 'children'),  # Update session details.
         Output('dynamic-link', 'href')          # Directly update the button!
     ],
     [Input('url', 'search')]                    # Extract token from URL parameters.
@@ -70,7 +70,8 @@ def generic_process_url_and_token(url_params):
         # If data is missing, set a generic title.
         app_title = "RNA-seq App"
 
-    return token, token_data, entity_data, app_data, app_title, session_details, dynamic_link
+    # return token, token_data, entity_data, app_data, app_title, session_details, dynamic_link
+    return token, token_data, entity_data, app_data, app_title, dynamic_link
 
 ## Bug Report Handling
 # ---------------------
