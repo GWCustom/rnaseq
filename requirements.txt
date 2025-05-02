@@ -2,8 +2,7 @@ annotated-types==0.7.0
 async-timeout==5.0.1
 attrs==25.3.0
 bfabric==1.13.23
-#-e git+https://github.com/GWCustom/bfabric-web-apps@30205241ed1e319726b92216ab130c9354b0c045#egg=bfabric_web_apps
-#bfabric_web_apps==0.1.8
+bfabric_web_apps==0.2.0
 blinker==1.9.0
 certifi==2025.1.31
 charset-normalizer==3.4.1
