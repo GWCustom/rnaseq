@@ -13,7 +13,7 @@ from dash.dash_table import DataTable
 import os
 import pandas as pd
 from bfabric_web_apps.utils.redis_queue import q
-from bfabric_web_apps import run_main_job, get_logger, read_file_as_bytes
+from bfabric_web_apps import run_main_job, get_logger, read_file_as_bytes, dataset_to_dictionary
 from datetime import datetime
 
 ######################################################################################################
@@ -367,41 +367,6 @@ def update_dataset(entity_data):
     df = dataset_to_dictionary(entity_data.get("full_api_response", {}))
     return df
 
-
-# ------------------------------------------------------------------------------
-# 2) FUNCTION TO CREATE DATAFRAME FROM B-FABRIC API RESPONSE
-# ------------------------------------------------------------------------------
-
-def dataset_to_dictionary(dataset): 
-
-    """
-    Convert B-Fabric API Dataset Response 
-    to a pandas dataframe
-
-    Args: 
-        dataset (dict): B-Fabric API Dataset Response
-
-    Returns:
-        pd.DataFrame: Dataframe containing the dataset information
-    """
-
-    # Check if the dataset is empty
-    if not dataset:
-        return pd.DataFrame()
-
-    attributes = dataset.get("attribute", []) 
-    items = [elt.get("field") for elt in dataset.get("item", [])]
-
-    position_map = {str(elt.get("position")): elt.get("name") for elt in attributes} # Create a mapping of attribute positions to names
-    df_dict = {elt : [] for elt in position_map.values()} # Create a dictionary to hold the dataframe data
-
-    for item in items: 
-        for field in item: 
-            attribute_position = field.get("attributeposition")
-            df_dict[position_map.get(attribute_position)].append(field.get("value")) # Append the field value to the corresponding attribute name in the dictionary
-                
-    # Create a dataframe from the dictionary
-    return df_dict
 
 
 # ------------------------------------------------------------------------------
