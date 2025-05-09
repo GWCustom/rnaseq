@@ -334,6 +334,8 @@ def run_main_job_callback(n_clicks,
 # ------------------------------------------------------------------------------
 if __name__ == "__main__":
 
-    app.run(debug=bfabric_web_apps.DEBUG,
-                   port=bfabric_web_apps.PORT,
-                   host=bfabric_web_apps.HOST)
+    app.run(
+        debug=bfabric_web_apps.DEBUG,
+        port=bfabric_web_apps.PORT,
+        host=bfabric_web_apps.HOST
+    )
