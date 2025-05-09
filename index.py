@@ -238,7 +238,7 @@ documentation_content = [
     ),
     html.Br(),
     html.H4("1. Architecture Overview"),
-    html.Img(src="https://i.imgur.com/JgOI3Xx.jpeg", style={"width": "100%", "maxWidth": "1000px", "marginBottom": "20px"}),
+    html.Img(src="https://i.imgur.com/OIadSYC.jpeg", style={"width": "100%", "maxWidth": "1000px", "marginBottom": "20px"}),
     html.P("""
         The RNA-seq app follows a three-tier architecture involving a local UI server, a compute server,
         and the B-Fabric system at FGCZ. Users interact with the Dash-based web app hosted on the Local GWC Server.
