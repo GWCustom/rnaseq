@@ -8,7 +8,7 @@
 <h3 align="center">NF-Core RNA-seq App</h3>
 
 <p align="center">
-  A proof-of-concept Dash application for bulk transcriptomics processing with NF-Core pipelines and B-Fabric integration.
+  A proof-of-concept B-Fabric WebApp for invoking bulk transcriptomics processing with NF-Core pipelines, tightly integrated with B-Fabric.
   <br />
   <br />
   <a href="https://github.com/GWCustom/rnaseq/issues/new?labels=bug&template=bug-report---.md">Report Bug</a>
