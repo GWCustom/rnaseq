@@ -161,9 +161,6 @@ app_specific_layout = dbc.Row(
                     "height": "100%",
                     "padding": "20px",
                     "font-size": "20px",
-                    "overflowY": "scroll",
-                    "maxHeight": "54vh",
-                    "overflowX": "hidden",
                 }
             ),
             width=3,
