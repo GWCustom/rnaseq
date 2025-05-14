@@ -24,7 +24,9 @@ from utils.layout_components import app_specific_layout, documentation_content, 
 ####################### STEP 1: Get Data From the User! ##############################################
 ######################################################################################################
 # ------------------------------------------------------------------------------
+
 # SET APPLICATION LAYOUT
+
 # ------------------------------------------------------------------------------
 # Use the get_static_layout function from bfabric_web_apps to set up the app layout.
 app.layout = bfabric_web_apps.get_static_layout(
