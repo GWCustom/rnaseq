@@ -244,18 +244,18 @@ def run_main_job_callback(n_clicks,
         create_sample_sheet_csv(dataset)
 
         # 2. Files as bytes -> samplesheets usw
+        work_dir = "/STORAGE/temp_rnaseq_run"
         files_as_byte_strings = {}
 
-        files_as_byte_strings["./samplesheet.csv"] = read_file_as_bytes("./samplesheet.csv")
+        files_as_byte_strings[f"{work_dir}/samplesheet.csv"] = read_file_as_bytes("./samplesheet.csv")
         L.log_operation("Info | ORIGIN: rnaseq web app", "Pipeline samplesheet loaded from ./samplesheet.csv.")
-        files_as_byte_strings["./NFC_RNA.config"] = read_file_as_bytes("./NFC_RNA.config")
+        files_as_byte_strings[f"{work_dir}/NFC_RNA.config"] = read_file_as_bytes("./NFC_RNA.config")
         L.log_operation("Info | ORIGIN: rnaseq web app", "NFC_RNA configuration loaded from ./NFC_RNA.config.")
 
         # 3. Bash command
 
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         output_dir = "/STORAGE/OUTPUT_rnaseq_" + timestamp
-        work_dir = "/STORAGE/temp_rnaseq_run"
 
         run_pipeline_command = (
             f"/home/nfc/.local/bin/nextflow run nf-core/rnaseq "
@@ -265,11 +265,13 @@ def run_main_job_callback(n_clicks,
             f"--skip_trimming "
             f"--outdir {output_dir} "
             f"-profile docker "
-            f"--custom_config_base {work_dir}"
+            f"--custom_config_base {work_dir} "
+            f"> {work_dir}/nextflow_log 2>&1"
         )
 
+
         # Use echo in subprocess
-        bash_command = f'echo "{run_pipeline_command}"'
+        bash_command = run_pipeline_command
         create_out_dir = f"mkdir {output_dir}"
         delete_old_work_dir = f"rm -Rf {work_dir}/work"
 
