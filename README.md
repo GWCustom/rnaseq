@@ -133,9 +133,6 @@ Then open [http://localhost:8050](http://localhost:8050) in your browser.
 
 ---
 
-Got it! Here’s your **final, copy-paste-ready Docker Deployment** section for the **RNA-seq app**, with your requested tweaks (Step 1 updated; Steps 2 & 3 exactly like in Demultiplex; Step 4 as you approved; the rest unchanged).
-
----
 
 ## Docker Deployment
 
@@ -182,10 +179,6 @@ Then open `.env` and adjust values to match your environment.
 
 > **Important:** Comment out the `REDIS_HOST` line so the app can connect to the Redis service correctly within Docker Compose.
 > When Redis runs as part of the same Compose network, it is automatically reachable via the service name `redis`.
-
----
-
-Got it—here’s **Step 4** updated to include the **Dockerfile** as well. It’s concise, copy-paste-ready, and keeps all docker files in scope.
 
 ---
 
