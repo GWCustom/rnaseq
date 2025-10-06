@@ -212,31 +212,6 @@ Set the working directory and ensure resource profiles match your host capacity:
 workDir = "/home/azureuser/APPLICATION/temp_rnaseq_run/work"
 ```
 
-Example process resources (tune to your host / Docker limits):
-
-```groovy
-process {
-  withName: /.*RSEM_PREPAREREFERENCE_GENOME.*/ {
-    cpus   = 16
-    memory = '180 GB'
-    time   = '24h'
-    containerOptions = '--memory=200g --shm-size=8g --cpus=16'
-  }
-  withName: /.*RSEM_CALCULATEEXPRESSION.*/ {
-    cpus   = 16
-    memory = '64 GB'
-    time   = '24h'
-    containerOptions = '--memory=80g --shm-size=8g --cpus=16'
-  }
-  withName: /.*STAR_ALIGN.*/ {
-    cpus   = 16
-    memory = '120 GB'
-    time   = '24h'
-    containerOptions = '--memory=140g --shm-size=8g --cpus=16'
-  }
-}
-```
-
 Checklist:
 
 * The parent of `workDir` must be mounted and writable.
