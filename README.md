@@ -110,13 +110,234 @@ PRODUCTION:
 
 > This file is required to authenticate with the B-Fabric API.
 
-### 5. Run the Application
+### 5. Create Your `.env` File
+
+The app uses a `.env` file to store environment variables required for running nextflow.
+An example file (`.env.example`) is included in the repository.
+
+Create your own `.env` file by copying the example:
+
+```bash
+cp .env.example .env
+```
+
+Then open `.env` in a text editor and adjust the values to match your environment.
+
+### 6. Run the Application
 
 ```bash
 python3 index.py
 ```
 
 Then open [http://localhost:8050](http://localhost:8050) in your browser.
+
+---
+
+Got it! Here’s your **final, copy-paste-ready Docker Deployment** section for the **RNA-seq app**, with your requested tweaks (Step 1 updated; Steps 2 & 3 exactly like in Demultiplex; Step 4 as you approved; the rest unchanged).
+
+---
+
+## Docker Deployment
+
+You can deploy the **RNA-seq App** using Docker Compose, which automatically sets up all required services.
+
+---
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/GWCustom/rnaseq.git
+cd rnaseq
+```
+
+---
+
+### 2. Configure `.bfabricpy.yml`
+
+Before launching the containers, ensure your B-Fabric API credentials are configured in `~/.bfabricpy.yml`:
+
+```yaml
+GENERAL:
+  default_config: PRODUCTION
+
+PRODUCTION:
+  login: your_username
+  password: your_password
+  base_url: https://your-bfabric-api-endpoint
+```
+
+> This file is mounted read-only into the containers.
+
+---
+
+### 3. Create Your `.env` File
+
+The app uses a `.env` file for environment variables required by Docker Compose. If an example file exists:
+
+```bash
+cp .env.example .env
+```
+
+Then open `.env` and adjust values to match your environment.
+
+> **Important:** Comment out the `REDIS_HOST` line so the app can connect to the Redis service correctly within Docker Compose.
+> When Redis runs as part of the same Compose network, it is automatically reachable via the service name `redis`.
+
+---
+
+Got it—here’s **Step 4** updated to include the **Dockerfile** as well. It’s concise, copy-paste-ready, and keeps all docker files in scope.
+
+---
+
+### 4. Review and adjust configuration files
+
+Update these paths so they match your host setup and the volumes you mount.
+
+#### A. `index.py` (absolute paths inside the container)
+
+Edit the following lines:
+
+```python
+work_dir = "/home/azureuser/APPLICATION/temp_rnaseq_run"
+output_dir = "/home/azureuser/STORAGE/OUTPUT_rnaseq_" + timestamp
+NEXTFLOW_BIN = "/home/azureuser/.local/bin/nextflow"
+```
+
+Notes:
+
+* `work_dir` must exist (and be writable) and will hold `samplesheet.csv`, `NFC_RNA.config`, and logs.
+* `output_dir` is created per run under a mounted, writable parent directory.
+* Keep `NEXTFLOW_BIN` consistent with the Dockerfile install path (or read it from env).
+
+---
+
+#### B. `NFC_RNA.config`
+
+Set the working directory and ensure resource profiles match your host capacity:
+
+```groovy
+workDir = "/home/azureuser/APPLICATION/temp_rnaseq_run/work"
+```
+
+Example process resources (tune to your host / Docker limits):
+
+```groovy
+process {
+  withName: /.*RSEM_PREPAREREFERENCE_GENOME.*/ {
+    cpus   = 16
+    memory = '180 GB'
+    time   = '24h'
+    containerOptions = '--memory=200g --shm-size=8g --cpus=16'
+  }
+  withName: /.*RSEM_CALCULATEEXPRESSION.*/ {
+    cpus   = 16
+    memory = '64 GB'
+    time   = '24h'
+    containerOptions = '--memory=80g --shm-size=8g --cpus=16'
+  }
+  withName: /.*STAR_ALIGN.*/ {
+    cpus   = 16
+    memory = '120 GB'
+    time   = '24h'
+    containerOptions = '--memory=140g --shm-size=8g --cpus=16'
+  }
+}
+```
+
+Checklist:
+
+* The parent of `workDir` must be mounted and writable.
+* Don’t overspecify `cpus` / `memory` beyond your Docker daemon’s limits.
+
+---
+
+#### C. `docker-compose.yml` (individual paths to verify)
+
+Environment variables with paths:
+
+```yaml
+environment:
+  BASE_DIR: "/home/azureuser/APPLICATION/temp_rnaseq_run"   # must contain samplesheet & config
+  OUTPUT_DIR: "/home/azureuser/STORAGE"                    # parent of timestamped output_dir
+  NEXTFLOW_BIN: "/home/azureuser/.local/bin/nextflow"      # must match Dockerfile install path
+  NXF_HOME: "/workspace/.nextflow"                         # Nextflow cache inside container
+```
+
+Volume mounts (host → container):
+
+```yaml
+volumes:
+  - .:/workspace
+  - /home/azureuser/APPLICATION:/home/azureuser/APPLICATION  # contains temp_rnaseq_run (+/work)
+  - /home/azureuser/STORAGE:/home/azureuser/STORAGE          # receives outputs
+  - /var/run/docker.sock:/var/run/docker.sock                # Nextflow launches containers
+  - ./ssh:/home/azureuser/.ssh:ro                            # or map your real ~/.ssh
+  - /home/azureuser/.bfabricpy.yml:/home/azureuser/.bfabricpy.yml:ro
+  # (worker may also map to /root if it runs as root)
+```
+
+Keep consistent:
+
+* `index.py` paths must live under the **container-side** paths on the right of each mount.
+* The container user (`azureuser` or root for worker) must have RW permissions.
+
+---
+
+#### C. `Dockerfile`
+
+* Uses non-root user `azureuser`, installs Nextflow at `/home/azureuser/.local/bin/nextflow`.
+* If you change the username, update paths in `docker-compose.yml`, `index.py`, and configs.
+```
+
+What to verify:
+
+* `NEXTFLOW_BIN` in `index.py` / Compose equals `/home/azureuser/.local/bin/nextflow`.
+* If you change the username (e.g., to `myuser`), update **all** paths in:
+
+  * `index.py` (`work_dir`, `output_dir`, `NEXTFLOW_BIN`)
+  * `NFC_RNA.config` (`workDir`)
+  * `docker-compose.yml` (env paths and mounts)
+  * Dockerfile (`/home/<user>/**` ownership and install locations)
+* Ensure `/workspace`, the mounted dirs, and Nextflow path are readable/writable by the app/worker user. The worker currently runs as root in Compose (`user: "0"`); if you harden later, align `NXF_DOCKER_OPTS` with a non-root UID:GID.
+
+
+---
+
+### 5. Build and Start the Containers
+
+**Build:**
+
+```bash
+docker compose build
+```
+
+**Start:**
+
+```bash
+docker compose up
+```
+
+---
+
+### 6. Access the App
+
+```
+http://localhost:8051
+```
+
+---
+
+### 7. Stop the Containers
+
+```bash
+docker compose down
+```
+
+> This stops and removes the containers but keeps volumes and images intact.
+
+---
+
+
 
 ---
 

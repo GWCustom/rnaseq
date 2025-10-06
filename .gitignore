@@ -163,8 +163,6 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
-#Dockerfile
-Dockerfile
 
 resource_example*
 
@@ -174,3 +172,9 @@ local_requirements.txt
 
 #Samplesheet
 samplesheet.csv
+
+
+# Nextflow work directory
+.nextflow/
+.nextflow.log.*
+pipeline_info/

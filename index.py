@@ -244,8 +244,13 @@ def run_main_job_callback(n_clicks,
         create_sample_sheet_csv(dataset)
 
         # 2. Files as bytes -> samplesheets usw
-        work_dir = "/STORAGE/temp_rnaseq_run"
         files_as_byte_strings = {}
+        
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        work_dir = "/home/azureuser/APPLICATION/temp_rnaseq_run"
+        output_dir = "/home/azureuser/STORAGE/OUTPUT_rnaseq_" + timestamp
+        NEXTFLOW_BIN = "/home/azureuser/.local/bin/nextflow"
+        
 
         files_as_byte_strings[f"{work_dir}/samplesheet.csv"] = read_file_as_bytes("./samplesheet.csv")
         L.log_operation("Info | ORIGIN: rnaseq web app", "Pipeline samplesheet loaded from ./samplesheet.csv.")
@@ -254,18 +259,18 @@ def run_main_job_callback(n_clicks,
 
         # 3. Bash command
 
-        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        output_dir = "/STORAGE/OUTPUT_rnaseq_" + timestamp
-
         run_pipeline_command = (
-            f"/home/nfc/.local/bin/nextflow run nf-core/rnaseq "
+            f"/{NEXTFLOW_BIN} run nf-core/rnaseq -r 3.14.0 "
             f"--input {work_dir}/samplesheet.csv "
-            f"--fasta {work_dir}/fasta_and_gtf_files/Homo_sapiens.GRCh38.dna.primary_assembly.fa "
-            f"--gtf {work_dir}/fasta_and_gtf_files/Homo_sapiens.GRCh38.109.gtf "
+            f"--genome GRCh38 "
+            f"--aligner star_rsem " 
+            f"--skip_gtf_filter "
             f"--skip_trimming "
+            f"--skip_dupradar "
+            f"--skip_deseq2_qc "
             f"--outdir {output_dir} "
             f"-profile docker "
-            f"--custom_config_base {work_dir} "
+            f"-c {work_dir}/NFC_RNA.config "
             f"> {work_dir}/nextflow_log 2>&1"
         )
 
@@ -273,9 +278,10 @@ def run_main_job_callback(n_clicks,
         # Use echo in subprocess
         bash_command = run_pipeline_command
         create_out_dir = f"mkdir {output_dir}"
-        delete_old_work_dir = f"rm -Rf {work_dir}/work"
+        # delete_old_work_dir = f"rm -Rf {work_dir}/work"
 
-        bash_commands = [delete_old_work_dir, create_out_dir ,bash_command]
+        #bash_commands = [delete_old_work_dir, create_out_dir ,bash_command]
+        bash_commands = [create_out_dir ,bash_command]
 
         project_id = 37767
 
