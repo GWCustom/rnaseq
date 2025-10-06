@@ -280,19 +280,6 @@ Keep consistent:
 
 * Uses non-root user `azureuser`, installs Nextflow at `/home/azureuser/.local/bin/nextflow`.
 * If you change the username, update paths in `docker-compose.yml`, `index.py`, and configs.
-```
-
-What to verify:
-
-* `NEXTFLOW_BIN` in `index.py` / Compose equals `/home/azureuser/.local/bin/nextflow`.
-* If you change the username (e.g., to `myuser`), update **all** paths in:
-
-  * `index.py` (`work_dir`, `output_dir`, `NEXTFLOW_BIN`)
-  * `NFC_RNA.config` (`workDir`)
-  * `docker-compose.yml` (env paths and mounts)
-  * Dockerfile (`/home/<user>/**` ownership and install locations)
-* Ensure `/workspace`, the mounted dirs, and Nextflow path are readable/writable by the app/worker user. The worker currently runs as root in Compose (`user: "0"`); if you harden later, align `NXF_DOCKER_OPTS` with a non-root UID:GID.
-
 
 ---
 
@@ -330,9 +317,6 @@ docker compose down
 
 ---
 
-
-
----
 
 ## License
 
