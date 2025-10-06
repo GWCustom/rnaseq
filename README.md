@@ -251,7 +251,7 @@ Keep consistent:
 
 ---
 
-#### C. `Dockerfile`
+#### D. `Dockerfile`
 
 * Uses non-root user `azureuser`, installs Nextflow at `/home/azureuser/.local/bin/nextflow`.
 * If you change the username, update paths in `docker-compose.yml`, `index.py`, and configs.
