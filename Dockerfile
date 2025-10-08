@@ -28,11 +28,16 @@ RUN install -m 0755 -d /etc/apt/keyrings \
 # ----------------------------------------------------------
 # Non-root user
 # ----------------------------------------------------------
+#Creates a user azureuser with a home directory and Bash shell.
+#Switches permanently to USER azureuser (principle of least privilege; safer than running as root).
+#Sets WORKDIR to /workspace (all relative paths from now on will be based here)
+
 RUN useradd -ms /bin/bash azureuser
 USER azureuser
 WORKDIR /workspace
 
 # Make sure no old nextflow binary is on disk
+# Removes any existing Nextflow binaries to avoid version conflicts.
 RUN rm -f /usr/bin/nextflow /usr/local/bin/nextflow /home/azureuser/.local/bin/nextflow
 
 # Install the desired version
@@ -54,6 +59,9 @@ RUN pip install --no-cache-dir -r /workspace/requirements.txt
 # ----------------------------------------------------------
 # Project files
 # ----------------------------------------------------------
+# Copies the entire project workspace into the image.
+# Recursively sets azureuser as the owner (important for write permissions during runtime).
+# Switches back to USER azureuser to ensure runtime security.
 COPY . /workspace
 RUN chown -R azureuser:azureuser /workspace
 USER azureuser
