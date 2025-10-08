@@ -136,7 +136,6 @@ Then open [http://localhost:8050](http://localhost:8050) in your browser.
 
 You can deploy the **RNA-seq App** using Docker Compose, which automatically sets up all required services.
 
----
 
 ### 1. Clone the Repository
 
@@ -144,8 +143,6 @@ You can deploy the **RNA-seq App** using Docker Compose, which automatically set
 git clone https://github.com/GWCustom/rnaseq.git
 cd rnaseq
 ```
-
----
 
 ### 2. Configure `.bfabricpy.yml`
 
@@ -162,8 +159,6 @@ PRODUCTION:
 ```
 
 
----
-
 ### 3. Create Your `.env` File
 
 The app uses a `.env` file for environment variables required by Docker Compose. If an example file exists:
@@ -177,7 +172,6 @@ Then open `.env` and adjust values to match your environment.
 > **Important:** Comment out the `REDIS_HOST` line so the app can connect to the Redis service correctly within Docker Compose.
 > When Redis runs as part of the same Compose network, it is automatically reachable via the service name `redis`.
 
----
 
 ### 4. Review and adjust configuration files
 
@@ -193,8 +187,6 @@ output_dir = "/home/azureuser/STORAGE/OUTPUT_rnaseq_" + timestamp
 NEXTFLOW_BIN = "/home/azureuser/.local/bin/nextflow"
 ```
 
----
-
 #### B. `NFC_RNA.config`
 
 Set the working directory and ensure resource profiles match your host capacity:
@@ -203,7 +195,6 @@ Set the working directory and ensure resource profiles match your host capacity:
 workDir = "/home/azureuser/APPLICATION/temp_rnaseq_run/work"
 ```
 
----
 
 #### C. `docker-compose.yml`
 
@@ -234,7 +225,6 @@ volumes:
 
 > Make sure to adjust the paths in both the web and worker services.
 
----
 
 #### D. `Dockerfile`
 
@@ -251,7 +241,6 @@ If you change the username (e.g. from `azureuser` to `myuser`), make sure to upd
 * All path references (e.g. `/home/azureuser/...`)
 * The mounted paths in your `docker-compose.yml`
 
----
 
 ### 5. Build and Start the Containers
 
@@ -267,15 +256,12 @@ docker compose build
 docker compose up
 ```
 
----
 
 ### 6. Access the App
 
 ```
 http://localhost:8050
 ```
-
----
 
 ### 7. Stop the Containers
 
