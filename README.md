@@ -136,6 +136,10 @@ Then open [http://localhost:8050](http://localhost:8050) in your browser.
 
 You can deploy the **RNA-seq App** using Docker Compose, which automatically sets up all required services.
 
+> **Security Note:**  
+> The `worker` container runs as **root** and mounts the **Docker socket**.  
+> This setup is required for Nextflow but grants the container **elevated privileges** on the host.  
+> Only use this configuration in **trusted environments**.
 
 ### 1. Clone the Repository
 
