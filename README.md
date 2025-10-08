@@ -29,8 +29,6 @@ The **NF-Core RNA-seq App** demonstrates integration between [B-Fabric](https://
 - Enqueues jobs for NF-Core RNA-seq execution using Redis.
 - Links results back to B-Fabric automatically.
 
-![Architecture Overview](https://i.imgur.com/OIadSYC.jpeg)
-
 ---
 
 ## Features
