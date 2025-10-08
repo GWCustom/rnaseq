@@ -35,7 +35,7 @@ WORKDIR /workspace
 # Make sure no old nextflow binary is on disk
 RUN rm -f /usr/bin/nextflow /usr/local/bin/nextflow /home/azureuser/.local/bin/nextflow
 
-# Install the desired version; note the 'v' prefix is optional but accepted
+# Install the desired version
 ENV NXF_VER=24.10.5
 # ----------------------------------------------------------
 # Nextflow
