@@ -163,7 +163,6 @@ PRODUCTION:
   base_url: https://your-bfabric-api-endpoint
 ```
 
-> This file is mounted read-only into the containers.
 
 ---
 
@@ -196,12 +195,6 @@ output_dir = "/home/azureuser/STORAGE/OUTPUT_rnaseq_" + timestamp
 NEXTFLOW_BIN = "/home/azureuser/.local/bin/nextflow"
 ```
 
-Notes:
-
-* `work_dir` must exist (and be writable) and will hold `samplesheet.csv`, `NFC_RNA.config`, and logs.
-* `output_dir` is created per run under a mounted, writable parent directory.
-* Keep `NEXTFLOW_BIN` consistent with the Dockerfile install path (or read it from env).
-
 ---
 
 #### B. `NFC_RNA.config`
@@ -212,14 +205,11 @@ Set the working directory and ensure resource profiles match your host capacity:
 workDir = "/home/azureuser/APPLICATION/temp_rnaseq_run/work"
 ```
 
-Checklist:
-
-* The parent of `workDir` must be mounted and writable.
-* Don’t overspecify `cpus` / `memory` beyond your Docker daemon’s limits.
-
 ---
 
-#### C. `docker-compose.yml` (individual paths to verify)
+#### C. `docker-compose.yml`
+
+Review the `docker-compose.yml` and update all path-related entries under `environment:` and `volumes:`.
 
 Environment variables with paths:
 
@@ -239,22 +229,29 @@ volumes:
   - /home/azureuser/APPLICATION:/home/azureuser/APPLICATION  # contains temp_rnaseq_run (+/work)
   - /home/azureuser/STORAGE:/home/azureuser/STORAGE          # receives outputs
   - /var/run/docker.sock:/var/run/docker.sock                # Nextflow launches containers
-  - ./ssh:/home/azureuser/.ssh:ro                            # or map your real ~/.ssh
-  - /home/azureuser/.bfabricpy.yml:/home/azureuser/.bfabricpy.yml:ro
-  # (worker may also map to /root if it runs as root)
+  - /home/azureuser/.ssh:/home/azureuser/.ssh:ro             # shh key
+  - /home/azureuser/.ssh:/root/.ssh:ro                       # known_hosts
+  - /home/azureuser/.bfabricpy.yml:/home/azureuser/.bfabricpy.yml:ro # B-Fabric credentials
 ```
 
-Keep consistent:
-
-* `index.py` paths must live under the **container-side** paths on the right of each mount.
-* The container user (`azureuser` or root for worker) must have RW permissions.
+> Make sure to adjust the paths in both the web and worker services.
 
 ---
 
 #### D. `Dockerfile`
 
-* Uses non-root user `azureuser`, installs Nextflow at `/home/azureuser/.local/bin/nextflow`.
-* If you change the username, update paths in `docker-compose.yml`, `index.py`, and configs.
+In the `Dockerfile`, you can **adjust the user** if your environment requires a different username:
+
+```dockerfile
+RUN useradd -ms /bin/bash azureuser
+USER azureuser
+WORKDIR /workspace
+```
+
+If you change the username (e.g. from `azureuser` to `myuser`), make sure to update:
+
+* All path references (e.g. `/home/azureuser/...`)
+* The mounted paths in your `docker-compose.yml`
 
 ---
 
@@ -277,7 +274,7 @@ docker compose up
 ### 6. Access the App
 
 ```
-http://localhost:8051
+http://localhost:8050
 ```
 
 ---

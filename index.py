@@ -297,23 +297,24 @@ def run_main_job_callback(n_clicks,
 
         # 5. Set attachment paths (e.g., for reports)
         attachment_paths = {
-            f'{output_dir}/multiqc/star_salmon/multiqc_report.html': 'multiqc_report.html',
-            f'{output_dir}/star_salmon/qualimap/Run_1913_12/qualimapReport.html': 'Run_1913_12_qualimapReport.html',
-            f'{output_dir}/star_salmon/qualimap/Run_1913_11/qualimapReport.html': 'Run_1913_11_qualimapReport.html',
-            f'{output_dir}/star_salmon/qualimap/Run_1913_10/qualimapReport.html': 'Run_1913_10_qualimapReport.html',
-            f'{output_dir}/star_salmon/qualimap/Run_1913_9/qualimapReport.html': 'Run_1913_9_qualimapReport.html',
-            f'{output_dir}/star_salmon/qualimap/Run_1913_6/qualimapReport.html': 'Run_1913_6_qualimapReport.html',
-            f'{output_dir}/star_salmon/qualimap/Run_1913_2/qualimapReport.html': 'Run_1913_2_qualimapReport.html',
-            f'{output_dir}/star_salmon/qualimap/Run_1913_4/qualimapReport.html': 'Run_1913_4_qualimapReport.html',
-            f'{output_dir}/star_salmon/qualimap/Run_1913_1/qualimapReport.html': 'Run_1913_1_qualimapReport.html',
-            f'{output_dir}/star_salmon/qualimap/Run_1913_3/qualimapReport.html': 'Run_1913_3_qualimapReport.html',
-            f'{output_dir}/star_salmon/qualimap/Run_1913_8/qualimapReport.html': 'Run_1913_8_qualimapReport.html',
-            f'{output_dir}/star_salmon/deseq2_qc/deseq2.plots.pdf': 'deseq2.plots.pdf',
-            f'{output_dir}/pipeline_info/execution_report_2025-04-18_11-37-24.html': 'execution_report_2025-04-18_11-37-24.html',
-            f'{output_dir}/multiqc/star_salmon/multiqc_report_plots/pdf/fastqc_raw_per_base_sequence_quality_plot.pdf': 'fastqc_raw_per_base_sequence_quality_plot.pdf',
-            f'{output_dir}/multiqc/star_salmon/multiqc_report_plots/pdf/general_stats_table.pdf': 'general_stats_table.pdf',
-            f'{output_dir}/multiqc/star_salmon/multiqc_report_plots/pdf/dupradar.pdf': 'dupradar.pdf',
+            f'{output_dir}/multiqc/star_rsem/multiqc_report.html': 'multiqc_report.html',
+            f'{output_dir}/star_rsem/qualimap/Run_1913_12/qualimapReport.html': 'Run_1913_12_qualimapReport.html',
+            f'{output_dir}/star_rsem/qualimap/Run_1913_11/qualimapReport.html': 'Run_1913_11_qualimapReport.html',
+            f'{output_dir}/star_rsem/qualimap/Run_1913_10/qualimapReport.html': 'Run_1913_10_qualimapReport.html',
+            f'{output_dir}/star_rsem/qualimap/Run_1913_9/qualimapReport.html': 'Run_1913_9_qualimapReport.html',
+            f'{output_dir}/star_rsem/qualimap/Run_1913_6/qualimapReport.html': 'Run_1913_6_qualimapReport.html',
+            f'{output_dir}/star_rsem/qualimap/Run_1913_2/qualimapReport.html': 'Run_1913_2_qualimapReport.html',
+            f'{output_dir}/star_rsem/qualimap/Run_1913_4/qualimapReport.html': 'Run_1913_4_qualimapReport.html',
+            f'{output_dir}/star_rsem/qualimap/Run_1913_1/qualimapReport.html': 'Run_1913_1_qualimapReport.html',
+            f'{output_dir}/star_rsem/qualimap/Run_1913_3/qualimapReport.html': 'Run_1913_3_qualimapReport.html',
+            f'{output_dir}/star_rsem/qualimap/Run_1913_8/qualimapReport.html': 'Run_1913_8_qualimapReport.html',
+            #f'{output_dir}/star_rsem/deseq2_qc/deseq2.plots.pdf': 'deseq2.plots.pdf',
+            #f'{output_dir}/pipeline_info/execution_report_2025-04-18_11-37-24.html': 'execution_report_2025-04-18_11-37-24.html',
+            #f'{output_dir}/multiqc/star_rsem/multiqc_report_plots/pdf/fastqc_raw_per_base_sequence_quality_plot.pdf': 'fastqc_raw_per_base_sequence_quality_plot.pdf',
+            #f'{output_dir}/multiqc/star_rsem/multiqc_report_plots/pdf/general_stats_table.pdf': 'general_stats_table.pdf',
+            #f'{output_dir}/multiqc/star_rsem/multiqc_report_plots/pdf/dupradar.pdf': 'dupradar.pdf',
         }
+
 
         # 6. Enqueue the main job into the Redis queue for asynchronous execution.        
         q(queue).enqueue(run_main_job, kwargs={
